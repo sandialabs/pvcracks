@@ -58,7 +58,7 @@ print("Size of NEW training array with crack %s" % str(train.shape))
 latent_dim = 50
 batch_size = 16
 learning_rate = 1e-3
-num_epochs = 50
+num_epochs = 250
 
 #Loss weigths
 bce_weight = 0.01 #0.01
@@ -173,7 +173,7 @@ show_generated_images(generated_images, num_images, path='CurrentResults/')
 #Save the model for reimporting
 # torch.save(model.state_dict(), 'model.pth')
 model.to('cpu')
-# torch.save(model, 'model_newimg_upepochs.pth')
+torch.save(model, 'model_newimg_upepochs.pth')
 
 #time full code
 t1 = t.time()
