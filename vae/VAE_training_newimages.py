@@ -16,40 +16,23 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from custom_dataset_v1 import CustomDataset, FixedRotation, FixedHorizontalFlip, FixedVerticalFlip
+from custom_dataset import CustomDataset, FixedRotation, FixedHorizontalFlip, FixedVerticalFlip
 from termcolor import colored
 from pytorch_ssim import SSIM #don't use pip installed version, is not maintained
 from torchvision import transforms
 import os
 from pathlib import Path
 
-from VAE_functions_v0 import preprocess, vae_loss, encode_image, decode_latent_vector, show_input_output_images, ssim_input_output, generate_random_images, show_generated_images, set_seeds
+from VAE_functions import preprocess, vae_loss, encode_image, decode_latent_vector, show_input_output_images, ssim_input_output, generate_random_images, show_generated_images, set_seeds
 
 #Set deterministic backend
 torch.backends.cudnn.benchmark = False
 torch.backends.cudnn.deterministic = True
 
 #Set seed
-set_seeds(30, True)
+# set_seeds(30, True)
 
-#Original duramat-datahub images for training
-# pathimages = '/home/nrjost/DuramatCrackImg/'
-# df = pd.read_csv(pathimages + 'image_inventory.csv', index_col=[0])
-    
-# #All images with cracks
-# array=[]
-# for i in range(len(df)):
-#     if df['has_cracks'].iloc[i]:
-#         array.append(preprocess(pathimages + df['maskpaths'].iloc[i]))
-
-# array=np.stack(array)
-# print("Size of array with cracked images %s" % str(array.shape))
-
-# train=array[:600,:,:,1:2] #second layer contains crack data
-# test=array[600:,:,:,1:2]
-
-
-#add emmas pv-vision crack mask from new images, full dataset available below
+#emmas pv-vision crack masks from new images, full dataset available below
 #https://datahub.duramat.org/dataset/pvcracks-crack-masks-for-vae
 new_pathimages = '/home/nrjost/DuramatCrackImg/emma_pvvision_crack_images/'
 root = Path(new_pathimages)
@@ -58,11 +41,8 @@ files_img = [x for x in files if x.endswith(('tiff'))]
 array_new=[]
 for i in range(len(files_img)):
     dat=io.imread(f"{root}/{files_img[i]}")
-    # dat=dat[:,:,:2]/255
-    # dat=dat[:,:,:2]/dat[:,:,1].max
     datmean = dat.mean()
     dat = (dat > datmean).astype(np.float32)
-    # dat = dat.astype('float32')
     array_new.append(dat)
 array_new = np.stack(array_new)
 print("Size of new array with cracked images %s" % str(array_new.shape))
@@ -72,20 +52,18 @@ print("Size of new array with cracked images %s" % str(array_new.shape))
 train = array_new[:-100,:,:,1:2]
 test = array_new[-99:,:,:,1:2]
 
-print("Size of NEW training array with cracked images %s" % str(train.shape))
-
-
+print("Size of NEW training array with crack %s" % str(train.shape))
 
 # Hyperparameters
 latent_dim = 50
 batch_size = 16
 learning_rate = 1e-3
-num_epochs = 250
+num_epochs = 50
 
 #Loss weigths
 bce_weight = 0.01 #0.01
 ssim_weight = 10000 #10000
-kld_weight = 0.03 #0.3
+kld_weight = 0.3 #0.3
 
 transform = transforms.Compose([FixedRotation(angle=180), 
                                 FixedHorizontalFlip(),
@@ -100,15 +78,15 @@ test_augmented = CustomDataset(test, transform=transform)
 
 # Create a DataLoader instance
 # train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers=0, worker_init_fn=lambda worker_id: set_seed(42 + worker_id))
-train_loader = DataLoader(train_augmented, batch_size=batch_size, shuffle=True, num_workers=0, worker_init_fn=lambda worker_id: set_seed(42 + worker_id))
-
+# train_loader = DataLoader(train_augmented, batch_size=batch_size, shuffle=True, num_workers=0, worker_init_fn=lambda worker_id: set_seed(42 + worker_id))
+train_loader = DataLoader(train_augmented, batch_size=batch_size, shuffle=True, num_workers=1)
 
 #Load Encoder, Decoder, VAE
-from VAE_model_v0 import Encoder, Decoder, VAE
+from VAE_model import Encoder, Decoder, VAE
 
 # Initialize the VAE model and optimizer
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-device = torch.device("cuda")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# device = torch.device("cuda")
 model = VAE(latent_dim)
 model.to(device)
 #model = VAE(latent_dim).to("cuda")
@@ -164,7 +142,7 @@ plt.show()
 
 import matplotlib.pyplot as plt
 
-num_images=100
+num_images=99
 test_loader = DataLoader(test,batch_size=num_images,shuffle=True,num_workers=4)
 # test_loader = DataLoader(test_augmented,batch_size=num_images,shuffle=True,num_workers=4)
 
@@ -180,12 +158,11 @@ with torch.no_grad():
 # Display 5 input images and their VAE outputs
 num_images_to_display = 5
 show_input_output_images(images, vae_outputs, num_images_to_display, path='CurrentResults/')
-num_images_to_compare = 100
+num_images_to_compare = 99
 ssim_comp = ssim_input_output(images, vae_outputs, num_images_to_compare, path='CurrentResults/')
 
 # Generate new images using the VAE model
 num_images = 10  # Number of images to generate
-# latent_dim = 100  # Latent space dimension
 generated_images, _ = generate_random_images(model, num_images, latent_dim)
 generated_images.to("cpu")
 
