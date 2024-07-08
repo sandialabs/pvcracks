@@ -1,5 +1,8 @@
 # el_img_cracks_ec
 
+Resulting training weights available here: 
+https://datahub.duramat.org/dataset/pvcracks-re-trained-pv-vision-model
+
 **Flow**
 1. Format images and targets (includes cropping, aligning, converting masks from .json files to .jpg files, mirroring images/masks)
 2. Train (includes splitting into training and validation sets, and training)
