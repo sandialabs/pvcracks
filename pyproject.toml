@@ -1,0 +1,20 @@
+[project]
+name = "pvcracks"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "imutils>=0.5.4",
+    "ipykernel>=6.29.5",
+    "matplotlib>=3.9.2",
+    "numpy>=2.1.2",
+    "opencv-python>=4.10.0.84",
+    "pandas>=2.2.3",
+    "pillow>=10.4.0",
+    "scikit-image>=0.24.0",
+    "scikit-learn>=1.5.2",
+    "torch>=2.4.1",
+    "torchaudio>=2.4.1",
+    "torchvision>=0.19.1",
+]
