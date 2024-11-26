@@ -10,4 +10,4 @@
    1. There should be five subfolders in `/img/` and `/ann_npy_split_busbars/` / `/ann_npy_split_cracks/`: `original`, `mirrored_x`, `mirrored_y`, `mirrored_xy`, and `all`. 
    2. Arrays that get flipped across the y-axis are saved in `mirrored_y` with a prefix "my_" on the file name. Similar for "mx_" in `mirrored_xy` and "mxy_" in `mirrored_xy`. 
    3. Everything also gets saved in `all`, which is ultimately used to split the files into training and testing sets. The prefixes distinguish the files when they are put in `all`.
-4. Afterwards, before training, run `../training/split_train_test.ipynb` to split the files into training and testing sets.
+4. Afterwards, before training, run `../training/split_train_val.ipynb` to split the files into training and testing sets.
