@@ -68,3 +68,14 @@ To remove `.DS_Store` files on Mac, run this in `/pvcracks`:
 ```
 find ./ -type f -name ".DS_Store" -exec rm -f {} +
 ```
+
+----
+
+With channeled:
+
+1. `create_channeled_directories.sh`
+2. Run `ojas_get_channeled_masks.ipynb` to make new masks, saved in  `ann/channeled`
+3. Copy from `{original}/img/original/` -> `{channeled}/img/original`
+4. Run `ojas_channeled_masks_flip_rotate_mirror_and_split_train_val.ipynb`
+5. Run `ojas_train_channeled_unet.ipynb`
+6. Profit

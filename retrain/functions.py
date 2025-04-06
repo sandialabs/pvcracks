@@ -135,6 +135,29 @@ class FixResize:
         target = cv.resize(target, (self.size, self.size), interpolation=0)
         return image, target
 
+class ChanneledFixResize:
+    def __init__(self, size):
+        self.size = size  # Ensure this is a positive integer, e.g., 400
+
+    def __call__(self, image, target):
+        # Resize image (assumed to be a PIL image) using torchvision transforms
+        image = F.resize(image, (self.size, self.size), interpolation=transforms.InterpolationMode.BILINEAR)
+        
+        # Resize target:
+        # If target is a multi-channel numpy array with shape (C, H, W)
+        if isinstance(target, np.ndarray) and len(target.shape) == 3:
+            channels = []
+            for c in range(target.shape[0]):
+                # Use nearest neighbor interpolation for segmentation masks
+                resized_channel = cv.resize(target[c], (self.size, self.size), interpolation=cv.INTER_NEAREST)
+                channels.append(resized_channel)
+            target_resized = np.stack(channels, axis=0)
+        else:
+            # Otherwise assume target is a 2D numpy array
+            target_resized = cv.resize(target, (self.size, self.size), interpolation=cv.INTER_NEAREST)
+        
+        return image, target_resized
+
 class ToTensor:
     """Transform the image to tensor. Scale the image to [0,1] float32.
     Transform the mask to tensor.
