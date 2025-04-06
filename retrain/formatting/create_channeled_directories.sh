@@ -9,8 +9,6 @@ fi
 ROOT_FOLDER=$1
 
 # Create the directory structure under the specified root folder
-mkdir -p "$ROOT_FOLDER/all"
-
 mkdir -p "$ROOT_FOLDER/ann/all"
 mkdir -p "$ROOT_FOLDER/ann/channeled"
 mkdir -p "$ROOT_FOLDER/ann/mirrored_x"
