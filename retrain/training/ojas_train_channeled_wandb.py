@@ -188,11 +188,14 @@ train_loader = DataLoader(
 )
 val_loader = DataLoader(val_dataset, batch_size=config["batch_size_val"], shuffle=False)
 
-# %%
+# %%``
 optimizer = Adam(model.parameters(), lr=config["lr"])
 # lr_scheduler = StepLR(optimizer, step_size=config["step_size"], gamma=config["gamma"])
 
 save_name = "model.pt"
+
+# %%
+run.watch(model, log_freq=100)
 
 # %%
 training_epoch_loss = []
