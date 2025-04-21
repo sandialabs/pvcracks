@@ -43,7 +43,7 @@ model_weight_paths = {
 # weight_path = model_weight_paths["emma_retrained"]
 weight_path = model_weight_paths["original"]
 
-checkpoint_name = root.split("/")[-2]
+checkpoint_name = "wandb_experiment_" + root.split("/")[-2]
 
 
 # %%
@@ -155,6 +155,91 @@ def new_inference_and_show(idx, threshold=0.5):
     plt.show()
 
 
+# %%
+def create_wandb_image(idx, threshold=0.5):
+    # Get the preprocessed image and multi-hot ground truth mask
+    img, mask = train_loader.dataset.__getitem__(idx)
+    img = img.to(device)
+
+    # --- Run inference ---
+    # Get raw logits from the model, then apply Sigmoid and threshold
+    logits = model(img.unsqueeze(0)).detach().cpu()  # shape: [1, 5, H, W]
+    probs = torch.sigmoid(logits)  # shape: [1, 5, H, W]
+    pred_mask = (probs > threshold).float().squeeze(0).numpy()  # shape: [5, H, W]
+
+    # Ground truth is assumed to be already a 5-channel multi-hot mask.
+    gt_mask = mask.cpu().numpy()  # shape: [5, H, W]
+
+    n_classes = len(category_mapping)
+
+    this_id_mask_images = []
+    for i in range(n_classes):
+        masks_dict = {
+            "predictions": {
+                "mask_data": pred_mask[i],
+                "class_labels": category_mapping,
+            },
+            "ground_truth": {
+                "mask_data": gt_mask[i],
+                "class_labels": category_mapping,
+            },
+        }
+
+        mask_img = wandb.Image(
+            img,
+            masks=masks_dict,
+        )
+        this_id_mask_images.append(mask_img)
+    return this_id_mask_images
+
+
+# %%
+def create_wandb_image_for_table(idx, threshold=0.5):
+    # Get the preprocessed image and multi-hot ground truth mask
+    img, mask = train_loader.dataset.__getitem__(idx)
+    img = img.to(device)
+
+    # --- Run inference ---
+    # Get raw logits from the model, then apply Sigmoid and threshold
+    logits = model(img.unsqueeze(0)).detach().cpu()  # shape: [1, 5, H, W]
+    probs = torch.sigmoid(logits)  # shape: [1, 5, H, W]
+    pred_mask = (probs > threshold).float().squeeze(0).numpy()  # shape: [5, H, W]
+
+    # Ground truth is assumed to be already a 5-channel multi-hot mask.
+    gt_mask = mask.cpu().numpy()  # shape: [5, H, W]
+
+    n_classes = len(category_mapping)
+
+    this_id_table_info = []
+    this_id_table_info.append(wandb.Image(img))
+
+    for i in range(n_classes):
+        this_id_table_info.append(
+            wandb.Image(
+                img,
+                masks={
+                    "ground_truth": {
+                        "mask_data": gt_mask[i],
+                        "class_labels": {0: category_mapping[i]},
+                    },
+                },
+            )
+        )
+        this_id_table_info.append(
+            wandb.Image(
+                img,
+                masks={
+                    "predictions": {
+                        "mask_data": pred_mask[i],
+                        "class_labels": {0: category_mapping[i]},
+                    },
+                },
+            )
+        )
+
+    return this_id_table_info
+
+
 # %% [markdown]
 # # Training
 
@@ -168,7 +253,7 @@ config = {
     "lr": 1e-4,
     "step_size": 1,
     "gamma": 0.1,
-    "num_epochs": 30,
+    "num_epochs": 2,
     "criterion": torch.nn.BCEWithLogitsLoss(),
 }
 
@@ -188,13 +273,14 @@ train_loader = DataLoader(
 )
 val_loader = DataLoader(val_dataset, batch_size=config["batch_size_val"], shuffle=False)
 
-# %%``
+# %%
 optimizer = Adam(model.parameters(), lr=config["lr"])
 # lr_scheduler = StepLR(optimizer, step_size=config["step_size"], gamma=config["gamma"])
 
 save_name = "model.pt"
 
 # %%
+# log gradients
 run.watch(model, log_freq=100)
 
 # %%
@@ -243,55 +329,56 @@ for epoch in tqdm(range(1, config["num_epochs"] + 1)):
 
     val_epoch_loss.append(np.array(val_step_loss).mean())
 
+    print(
+        f"Epoch {epoch}/{config['num_epochs']}, Training Loss: {np.array(training_step_loss).mean()}, Validation Loss: {np.array(val_step_loss).mean()}"
+    )
+
+    print("Generating predictions for wandb...")
+    mask_images = []
+    table = wandb.Table(
+        columns=[
+            "Image",
+            "GT Empty",
+            "Pred Empty",
+            "GT Dark",
+            "Pred Dark",
+            "GT Busbar",
+            "Pred Busbar",
+            "GT Crack",
+            "Pred Crack",
+            "GT Non-cell",
+            "Pred Non-cell",
+        ]
+    )
+    for id in range(20):
+        mask_images.extend(create_wandb_image(id))
+        new_img_table = create_wandb_image_for_table(id)
+        table.add_data(*new_img_table)
+
+    print("Logging to wandb...")
     run.log(
         {
             "train_loss": np.array(training_step_loss).mean(),
             "val_loss": np.array(val_step_loss).mean(),
+            "predictions": mask_images,
+            "table": table,
         }
     )
 
+    table = wandb.Table(columns=["Image"])
+
+    print("Saving model...")
     os.makedirs(os.path.join(save_dir, f"epoch_{epoch}"), exist_ok=True)
     torch.save(model.state_dict(), os.path.join(save_dir, f"epoch_{epoch}", save_name))
-    print(f"Saved model at epoch {epoch}")
+    print(f"Saved model at epoch {epoch}.", end=" ")
 
     if epoch >= 2 and epoch < config["num_epochs"]:
         os.remove(os.path.join(save_dir, f"epoch_{epoch-1}", save_name))
-        print(f"Removed model at epoch {epoch-1}")
+        print(f"Removed model at epoch {epoch-1}.", end="")
+    print("\n")
 
-# %%
-# new_inference_and_show(-32)
-
-# %%
-# new_inference_and_show(13)
-
-# %%
-# new_inference_and_show(44)
-
-# %%
-# new_inference_and_show(1)
-
-# %%
-# new_inference_and_show(6)
-
-# %%
-# for i in range(100):
-#     new_inference_and_show(i)
-
-# %%
-# fig, ax = plt.subplots()
-
-# x = np.arange(1, len(training_epoch_loss) + 1, 1)
-
-# ax.scatter(x, training_epoch_loss, label="training loss")
-# ax.scatter(x, val_epoch_loss, label="validation loss")
-# ax.legend()
-# ax.set_xlabel("Epoch")
-
-# print(training_epoch_loss)
-
-
-# %%
-# val_epoch_loss
+# %% [markdown]
+# ---
 
 # %%
 run.finish()
