@@ -28,11 +28,11 @@ import functions
 from tutorials.unet_model import construct_unet
 
 # %%
-root = "/Users/ojas/Desktop/saj/SANDIA/pvcracks_data/Channeled_ASU/"
+# root = "/Users/ojas/Desktop/saj/SANDIA/pvcracks_data/Channeled_ASU/"
 # root = "/Users/ojas/Desktop/saj/SANDIA/pvcracks_data/Channeled_CWRU_Dupont/"
 # root = "/Users/ojas/Desktop/saj/SANDIA/pvcracks_data/Channeled_CWRU_SunEdison/"
 # root = "/Users/ojas/Desktop/saj/SANDIA/pvcracks_data/Channeled_LBNL/"
-# root = "/Users/ojas/Desktop/saj/SANDIA/pvcracks_data/Channeled_Combined_CWRU_LBNL_ASU/"
+root = "/Users/ojas/Desktop/saj/SANDIA/pvcracks_data/Channeled_Combined_CWRU_LBNL_ASU/"
 
 
 model_weight_paths = {
@@ -43,7 +43,7 @@ model_weight_paths = {
 # weight_path = model_weight_paths["emma_retrained"]
 weight_path = model_weight_paths["original"]
 
-checkpoint_name = "wandb_experiment_" + root.split("/")[-2]
+checkpoint_name = "wandb_" + root.split("/")[-2]
 
 
 # %%
@@ -247,7 +247,7 @@ def create_wandb_image_for_table(idx, threshold=0.5):
 save_dir = get_save_dir(str(root), checkpoint_name)
 os.makedirs(save_dir, exist_ok=True)
 
-config = {
+original_config = {
     "batch_size_val": 4,
     "batch_size_train": 4,
     "lr": 1e-4,
@@ -257,25 +257,27 @@ config = {
     "criterion": torch.nn.BCEWithLogitsLoss(),
 }
 
-config_serializable = config.copy()
+config_serializable = original_config.copy()
 config_serializable["criterion"] = str(config_serializable["criterion"])
 
 with open(os.path.join(save_dir, "config.json"), "w", encoding="utf-8") as f:
     json.dump(config_serializable, f, ensure_ascii=False, indent=4)
 
 run = wandb.init(
-    project="pvcracks", entity="ojas-sanghi-university-of-arizona", config=config
+    project="pvcracks",
+    entity="ojas-sanghi-university-of-arizona",
+    config=original_config,
 )
-
+config = wandb.config
 # %%
 train_loader = DataLoader(
-    train_dataset, batch_size=config["batch_size_train"], shuffle=True
+    train_dataset, batch_size=config.batch_size_train, shuffle=True
 )
-val_loader = DataLoader(val_dataset, batch_size=config["batch_size_val"], shuffle=False)
+val_loader = DataLoader(val_dataset, batch_size=config.batch_size_val, shuffle=False)
 
 # %%
-optimizer = Adam(model.parameters(), lr=config["lr"])
-# lr_scheduler = StepLR(optimizer, step_size=config["step_size"], gamma=config["gamma"])
+optimizer = Adam(model.parameters(), lr=config.lr)
+# lr_scheduler = StepLR(optimizer, step_size=config.step_size, gamma=config.gamma)
 
 save_name = "model.pt"
 
@@ -287,7 +289,7 @@ run.watch(model, log_freq=100)
 training_epoch_loss = []
 val_epoch_loss = []
 
-for epoch in tqdm(range(1, config["num_epochs"] + 1)):
+for epoch in tqdm(range(1, config.num_epochs + 1)):
     training_step_loss = []
 
     for batch_idx, (data, target) in enumerate(train_loader):
@@ -300,7 +302,7 @@ for epoch in tqdm(range(1, config["num_epochs"] + 1)):
         output = model(data)
 
         # calc loss -- bce with logits loss applies sigmoid interally
-        training_loss = config["criterion"](output, target)
+        training_loss = original_config["criterion"](output, target)
 
         # backward pass
         training_loss.backward()
@@ -323,14 +325,14 @@ for epoch in tqdm(range(1, config["num_epochs"] + 1)):
         output = model(data)
 
         # calc loss -- bce with logits loss applies sigmoid interally
-        val_loss = config["criterion"](output, target)
+        val_loss = original_config["criterion"](output, target)
 
         val_step_loss.append(val_loss.item())
 
     val_epoch_loss.append(np.array(val_step_loss).mean())
 
     print(
-        f"Epoch {epoch}/{config['num_epochs']}, Training Loss: {np.array(training_step_loss).mean()}, Validation Loss: {np.array(val_step_loss).mean()}"
+        f"Epoch {epoch}/{config.num_epochs}, Training Loss: {np.array(training_step_loss).mean()}, Validation Loss: {np.array(val_step_loss).mean()}"
     )
 
     print("Generating predictions for wandb...")
@@ -372,7 +374,7 @@ for epoch in tqdm(range(1, config["num_epochs"] + 1)):
     torch.save(model.state_dict(), os.path.join(save_dir, f"epoch_{epoch}", save_name))
     print(f"Saved model at epoch {epoch}.", end=" ")
 
-    if epoch >= 2 and epoch < config["num_epochs"]:
+    if epoch >= 2 and epoch < config.num_epochs:
         os.remove(os.path.join(save_dir, f"epoch_{epoch-1}", save_name))
         print(f"Removed model at epoch {epoch-1}.", end="")
     print("\n")

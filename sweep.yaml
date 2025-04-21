@@ -11,24 +11,20 @@ parameters:
     distribution: int_uniform
     max: 8
     min: 2
-  criterion:
-    distribution: categorical
-    values:
-      - BCEWithLogitsLoss()
+  # criterion:
+  #   distribution: categorical
+  #   values:
+  #     - BCEWithLogitsLoss()
   gamma:
     distribution: uniform
     max: 0.2
     min: 0.05
   lr:
     distribution: uniform
-    max: 0.001
-    min: 5e-05
+    max: 1e-3
+    min: 1e-5
   num_epochs:
     distribution: int_uniform
-    max: 60
+    max: 50
     min: 15
-  step_size:
-    distribution: int_uniform
-    max: 2
-    min: 1
 program: retrain/training/ojas_train_channeled_wandb.py
