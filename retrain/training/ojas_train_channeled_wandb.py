@@ -45,6 +45,18 @@ weight_path = model_weight_paths["original"]
 
 checkpoint_name = "wandb_" + root.split("/")[-2]
 
+# %%
+def dice_coefficient(pred, target, epsilon=1e-6):
+    intersection = (pred * target).sum()
+    union = pred.sum() + target.sum()
+    dice = (2. * intersection + epsilon) / (union + epsilon)
+    return dice
+
+def iou_score(pred, target, epsilon=1e-6):
+    intersection = (pred * target).sum()
+    union = pred.sum() + target.sum() - intersection
+    iou = (intersection + epsilon) / (union + epsilon)
+    return iou
 
 # %%
 def load_dataset(root):
@@ -330,40 +342,59 @@ for epoch in tqdm(range(1, config.num_epochs + 1)):
         val_step_loss.append(val_loss.item())
 
     val_epoch_loss.append(np.array(val_step_loss).mean())
+    
+    # Compute dice and IoU metrics per channel
+    pred_probs = torch.sigmoid(output)
+    pred_binary = (pred_probs > 0.5).float()
+
+    dice_scores = []
+    iou_scores = []
+
+    for i in range(pred_binary.size(1)):  # Loop over channels
+        dice = dice_coefficient(pred_binary[:, i], target[:, i])
+        iou = iou_score(pred_binary[:, i], target[:, i])
+        dice_scores.append(dice.item())
+        iou_scores.append(iou.item())
+
+    avg_dice = np.mean(dice_scores)
+    avg_iou = np.mean(iou_scores)
+
 
     print(
-        f"Epoch {epoch}/{config.num_epochs}, Training Loss: {np.array(training_step_loss).mean()}, Validation Loss: {np.array(val_step_loss).mean()}"
+        f"Epoch {epoch}/{config.num_epochs}, Training Loss: {np.array(training_step_loss).mean()}, Validation Loss: {np.array(val_step_loss).mean()}, Avg Dice: {avg_dice}, Avg IoU: {avg_iou}"
     )
 
-    print("Generating predictions for wandb...")
-    mask_images = []
-    table = wandb.Table(
-        columns=[
-            "Image",
-            "GT Empty",
-            "Pred Empty",
-            "GT Dark",
-            "Pred Dark",
-            "GT Busbar",
-            "Pred Busbar",
-            "GT Crack",
-            "Pred Crack",
-            "GT Non-cell",
-            "Pred Non-cell",
-        ]
-    )
-    for id in range(20):
-        mask_images.extend(create_wandb_image(id))
-        new_img_table = create_wandb_image_for_table(id)
-        table.add_data(*new_img_table)
+    # print("Generating predictions for wandb...")
+    # mask_images = []
+    # table = wandb.Table(
+    #     columns=[
+    #         "Image",
+    #         "GT Empty",
+    #         "Pred Empty",
+    #         "GT Dark",
+    #         "Pred Dark",
+    #         "GT Busbar",
+    #         "Pred Busbar",
+    #         "GT Crack",
+    #         "Pred Crack",
+    #         "GT Non-cell",
+    #         "Pred Non-cell",
+    #     ]
+    # )
+    # for id in range(20):
+    #     mask_images.extend(create_wandb_image(id))
+    #     new_img_table = create_wandb_image_for_table(id)
+    #     table.add_data(*new_img_table)
 
     print("Logging to wandb...")
     run.log(
         {
             "train_loss": np.array(training_step_loss).mean(),
             "val_loss": np.array(val_step_loss).mean(),
-            "predictions": mask_images,
-            "table": table,
+            "avg_dice": avg_dice,
+            "avg_iou": avg_iou,
+            # "predictions": mask_images,
+            # "table": table,
         }
     )
 
