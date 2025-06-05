@@ -112,7 +112,7 @@ original_config = {
     "batch_size_train": 8,
     "lr": 0.00092234,
     "gamma": 0.11727,
-    "num_epochs": 2,
+    "num_epochs": 1,
     
     # constants
     "batch_size_val": 8,
@@ -201,17 +201,13 @@ for fold, (train_ids, val_ids) in enumerate(kfold.split(trainval_set)):
         epoch_avg_dice = np.mean(dice_scores)
         epoch_avg_iou = np.mean(iou_scores)
 
-        # Specify the step metric (x-axis) and the metric to log against it (y-axis)
-        run.define_metric(f"fold{fold+1}/*", step_metric = "epoch")
         # Log per-fold, per-epoch to W&B
         run.log({
             f"fold{fold+1}/train_loss": epoch_train_loss,
             f"fold{fold+1}/val_loss":   epoch_val_loss,
             f"fold{fold+1}/dice":       epoch_avg_dice,
             f"fold{fold+1}/iou":        epoch_avg_iou,
-            "epoch": epoch,
-        })
-        
+        }, step=epoch)
 
         # Keep best for this fold
         if epoch_val_loss < best_fold_val_loss:
