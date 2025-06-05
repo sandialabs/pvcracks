@@ -1,7 +1,7 @@
 method: bayes
 metric:
+  name: avg_val_loss
   goal: minimize
-  name: val_loss
 parameters:
   batch_size_train:
     distribution: int_uniform
@@ -9,7 +9,7 @@ parameters:
     min: 2
   batch_size_val:
     distribution: constant
-    value: 50
+    value: 10
   # criterion:
   #   distribution: categorical
   #   values:
