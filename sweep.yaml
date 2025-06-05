@@ -8,9 +8,8 @@ parameters:
     max: 8
     min: 2
   batch_size_val:
-    distribution: int_uniform
-    max: 8
-    min: 2
+    distribution: constant
+    value: 50
   # criterion:
   #   distribution: categorical
   #   values:
@@ -27,4 +26,4 @@ parameters:
     distribution: int_uniform
     max: 50
     min: 15
-program: retrain/training/ojas_train_channeled_wandb.py
+program: retrain/training/ojas_train_channeled_wandb_k_fold.py

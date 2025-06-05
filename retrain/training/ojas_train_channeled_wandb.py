@@ -260,13 +260,13 @@ save_dir = get_save_dir(str(root), checkpoint_name)
 os.makedirs(save_dir, exist_ok=True)
 
 original_config = {
-    "batch_size_val": 4,
-    "batch_size_train": 4,
-    "lr": 1e-4,
-    "step_size": 1,
-    "gamma": 0.1,
-    "num_epochs": 2,
+    "batch_size_train": 8,
+    "lr": 0.00092234,
+    "gamma": 0.11727,
+    "num_epochs": 45,
+    "batch_size_val": 8,
     "criterion": torch.nn.BCEWithLogitsLoss(),
+    # "lr_scheduler_step_size": 1,
 }
 
 config_serializable = original_config.copy()
@@ -289,7 +289,7 @@ val_loader = DataLoader(val_dataset, batch_size=config.batch_size_val, shuffle=F
 
 # %%
 optimizer = Adam(model.parameters(), lr=config.lr)
-# lr_scheduler = StepLR(optimizer, step_size=config.step_size, gamma=config.gamma)
+# lr_scheduler = StepLR(optimizer, step_size=config.lr_scheduler_step_size, gamma=config.gamma)
 
 save_name = "model.pt"
 
