@@ -45,18 +45,21 @@ weight_path = model_weight_paths["original"]
 
 checkpoint_name = "wandb_" + root.split("/")[-2]
 
+
 # %%
 def dice_coefficient(pred, target, epsilon=1e-6):
     intersection = (pred * target).sum()
     union = pred.sum() + target.sum()
-    dice = (2. * intersection + epsilon) / (union + epsilon)
+    dice = (2.0 * intersection + epsilon) / (union + epsilon)
     return dice
+
 
 def iou_score(pred, target, epsilon=1e-6):
     intersection = (pred * target).sum()
     union = pred.sum() + target.sum() - intersection
     iou = (intersection + epsilon) / (union + epsilon)
     return iou
+
 
 # %%
 def load_dataset(root):
@@ -342,7 +345,7 @@ for epoch in tqdm(range(1, config.num_epochs + 1)):
         val_step_loss.append(val_loss.item())
 
     val_epoch_loss.append(np.array(val_step_loss).mean())
-    
+
     # Compute dice and IoU metrics per channel
     pred_probs = torch.sigmoid(output)
     pred_binary = (pred_probs > 0.5).float()
@@ -358,7 +361,6 @@ for epoch in tqdm(range(1, config.num_epochs + 1)):
 
     avg_dice = np.mean(dice_scores)
     avg_iou = np.mean(iou_scores)
-
 
     print(
         f"Epoch {epoch}/{config.num_epochs}, Training Loss: {np.array(training_step_loss).mean()}, Validation Loss: {np.array(val_step_loss).mean()}, Avg Dice: {avg_dice}, Avg IoU: {avg_iou}"
@@ -406,8 +408,8 @@ for epoch in tqdm(range(1, config.num_epochs + 1)):
     print(f"Saved model at epoch {epoch}.", end=" ")
 
     if epoch >= 2 and epoch < config.num_epochs:
-        os.remove(os.path.join(save_dir, f"epoch_{epoch-1}", save_name))
-        print(f"Removed model at epoch {epoch-1}.", end="")
+        os.remove(os.path.join(save_dir, f"epoch_{epoch - 1}", save_name))
+        print(f"Removed model at epoch {epoch - 1}.", end="")
     print("\n")
 
 # %% [markdown]

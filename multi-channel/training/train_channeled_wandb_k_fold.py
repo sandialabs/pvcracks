@@ -39,12 +39,14 @@ checkpoint_name = "wandb_" + root.split("/")[-2]
 # %%
 category_mapping = {0: "dark", 1: "busbar", 2: "crack", 3: "non-cell"}
 
+
 # %%
 def dice_coefficient(pred, target, epsilon=1e-6):
     intersection = (pred * target).sum()
     union = pred.sum() + target.sum()
-    dice = (2. * intersection + epsilon) / (union + epsilon)
+    dice = (2.0 * intersection + epsilon) / (union + epsilon)
     return dice
+
 
 def iou_score(pred, target, epsilon=1e-6):
     intersection = (pred * target).sum()
@@ -65,6 +67,7 @@ def load_dataset(root):
 
     return full_dataset
 
+
 # %%
 def load_device_and_model(weight_path):
     # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -75,6 +78,7 @@ def load_device_and_model(weight_path):
     model = unet.module.to(device)
 
     return device, model
+
 
 # %%
 def get_save_dir(base_dir, checkpoint_name):
@@ -93,6 +97,7 @@ def get_save_dir(base_dir, checkpoint_name):
     os.makedirs(new_folder_path, exist_ok=True)
 
     return new_folder_path
+
 
 # %%
 full_dataset = load_dataset(root)
@@ -113,7 +118,6 @@ original_config = {
     "lr": 0.00092234,
     "gamma": 0.11727,
     "num_epochs": 2,
-    
     # constants
     "batch_size_val": 8,
     "criterion": torch.nn.BCEWithLogitsLoss(),
@@ -145,22 +149,26 @@ fold_iou_scores = []
 
 
 for fold, (train_ids, val_ids) in enumerate(kfold.split(trainval_set)):
-    print(f"\n--- FOLD {fold+1}/{k_folds} ---")
+    print(f"\n--- FOLD {fold + 1}/{k_folds} ---")
 
     train_subsampler = torch.utils.data.Subset(trainval_set, train_ids)
-    train_loader = DataLoader(train_subsampler, batch_size=config.batch_size_train, shuffle=True)
+    train_loader = DataLoader(
+        train_subsampler, batch_size=config.batch_size_train, shuffle=True
+    )
     val_subsampler = torch.utils.data.Subset(trainval_set, val_ids)
-    val_loader = DataLoader(val_subsampler, batch_size=config.batch_size_val, shuffle=False)
+    val_loader = DataLoader(
+        val_subsampler, batch_size=config.batch_size_val, shuffle=False
+    )
 
     # Initialize a fresh model and optimizer
     device, model = load_device_and_model(weight_path)
     optimizer = Adam(model.parameters(), lr=config.lr)
     run.watch(model, log_freq=100)
-    
+
     best_fold_val_loss = float("inf")
     best_fold_dice = 0.0
     best_fold_iou = 0.0
-    
+
     # PER-EPOCH TRAINING
     for epoch in tqdm(range(1, config.num_epochs + 1)):
         training_step_loss = []
@@ -183,7 +191,7 @@ for fold, (train_ids, val_ids) in enumerate(kfold.split(trainval_set)):
             data, target = data.to(device), target.to(device)
             target = target.float()
             output = model(data)
-            
+
             val_loss = original_config["criterion"](output, target)
             val_step_loss.append(val_loss.item())
 
@@ -202,25 +210,28 @@ for fold, (train_ids, val_ids) in enumerate(kfold.split(trainval_set)):
         epoch_avg_iou = np.mean(iou_scores)
 
         # Specify the step metric (x-axis) and the metric to log against it (y-axis)
-        run.define_metric(f"fold{fold+1}/*", step_metric = "epoch")
+        run.define_metric(f"fold{fold + 1}/*", step_metric="epoch")
         # Log per-fold, per-epoch to W&B
-        run.log({
-            f"fold{fold+1}/train_loss": epoch_train_loss,
-            f"fold{fold+1}/val_loss":   epoch_val_loss,
-            f"fold{fold+1}/dice":       epoch_avg_dice,
-            f"fold{fold+1}/iou":        epoch_avg_iou,
-            "epoch": epoch,
-        })
-        
+        run.log(
+            {
+                f"fold{fold + 1}/train_loss": epoch_train_loss,
+                f"fold{fold + 1}/val_loss": epoch_val_loss,
+                f"fold{fold + 1}/dice": epoch_avg_dice,
+                f"fold{fold + 1}/iou": epoch_avg_iou,
+                "epoch": epoch,
+            }
+        )
 
         # Keep best for this fold
         if epoch_val_loss < best_fold_val_loss:
             best_fold_val_loss = epoch_val_loss
             best_fold_dice = epoch_avg_dice
             best_fold_iou = epoch_avg_iou
-    
-    print(f"Fold {fold+1} best val_loss: {best_fold_val_loss:.4f}, dice: {best_fold_dice:.4f}, iou: {best_fold_iou:.4f}")
-    
+
+    print(
+        f"Fold {fold + 1} best val_loss: {best_fold_val_loss:.4f}, dice: {best_fold_dice:.4f}, iou: {best_fold_iou:.4f}"
+    )
+
     fold_val_losses.append(best_fold_val_loss)
     fold_dice_scores.append(best_fold_dice)
     fold_iou_scores.append(best_fold_iou)
@@ -229,15 +240,17 @@ for fold, (train_ids, val_ids) in enumerate(kfold.split(trainval_set)):
 # ========== AGGREGATE RESULTS ACROSS FOLDS ==========
 
 avg_val_loss = np.mean(fold_val_losses)
-avg_dice     = np.mean(fold_dice_scores)
-avg_iou      = np.mean(fold_iou_scores)
+avg_dice = np.mean(fold_dice_scores)
+avg_iou = np.mean(fold_iou_scores)
 
 # Log the averages to W&B summary for sweep optimization
-wandb.log({
-    "avg_val_loss": avg_val_loss,
-    "avg_dice":     avg_dice,
-    "avg_iou":      avg_iou,
-})
+wandb.log(
+    {
+        "avg_val_loss": avg_val_loss,
+        "avg_dice": avg_dice,
+        "avg_iou": avg_iou,
+    }
+)
 wandb.run.summary["avg_val_loss"] = avg_val_loss
 
 print(f"Average val_loss: {avg_val_loss:.4f}, dice: {avg_dice:.4f}, iou: {avg_iou:.4f}")
@@ -251,5 +264,3 @@ run.finish()
 
 # %% [markdown]
 # ---
-
-
