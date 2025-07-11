@@ -63,7 +63,7 @@ The final `tree -d` directory structure should look like this:
 
 ---
 
-To remove `.DS_Store` files on Mac, run this in `/pvcracks`:
+To remove `.DS_Store` files on Mac, run this in `/pvcracks` and `/pvcracks_data`:
 
 ```
 find ./ -type f -name ".DS_Store" -exec rm -f {} +
