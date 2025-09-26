@@ -11,20 +11,7 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-# pv_vision_dir = os.path.join(Path.home(), 'pv-vision')
-pv_vision_dir = os.path.join("/home/eccoope", "pv-vision")
-# functions_dir = os.path.join(Path.home(), 'el_img_cracks_ec', 'scripts')
-functions_dir = os.path.join("/home/eccoope", "el_img_cracks_ec", "scripts")
-
-sys.path.append(pv_vision_dir)
-sys.path.append(functions_dir)
-
-# ojas_functions_dir = os.path.join(Path.home(), 'pvcracks/retrain/')
-ojas_functions_dir = "/Users/ojas/Desktop/saj/SANDIA/pvcracks/retrain/"
-sys.path.append(ojas_functions_dir)
-
-import functions
-
+from utils import img_functions
 from utils.unet_model import construct_unet
 
 # %%
@@ -63,15 +50,19 @@ def iou_score(pred, target, epsilon=1e-6):
 
 # %%
 def load_dataset(root):
-    transformers = functions.Compose(
-        [functions.ChanneledFixResize(256), functions.ToTensor(), functions.Normalize()]
+    transformers = img_functions.Compose(
+        [
+            img_functions.ChanneledFixResize(256),
+            img_functions.ToTensor(),
+            img_functions.Normalize(),
+        ]
     )
 
-    train_dataset = functions.SolarDataset(
+    train_dataset = img_functions.SolarDataset(
         root, image_folder="img/train", mask_folder="ann/train", transforms=transformers
     )
 
-    val_dataset = functions.SolarDataset(
+    val_dataset = img_functions.SolarDataset(
         root, image_folder="img/val", mask_folder="ann/val", transforms=transformers
     )
 
