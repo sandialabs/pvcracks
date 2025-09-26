@@ -112,3 +112,7 @@ dependencies = [
     "wcwidth==0.2.13",
     "xyzservices==2025.4.0",
 ]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
