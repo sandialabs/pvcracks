@@ -5,7 +5,7 @@ from pathlib import Path
 import torch
 import torchvision.transforms.functional as F
 from torchvision.datasets.vision import VisionDataset
-from imutils.paths import list_images, list_files
+from imutils.paths import list_files
 from PIL import Image
 import cv2 as cv
 import numpy as np
