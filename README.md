@@ -1,4 +1,4 @@
-<img src="docs/pvcracks_logo.png" width="600">
+<img src="docs/pvcracks_logo.png" width="200">
 
 # PVCracks
 
