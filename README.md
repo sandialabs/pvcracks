@@ -40,6 +40,10 @@ Below is a schematic of the repos architecture:
   2025 IEEE 53rd Photovoltaic Specialists Conference (PVSC) proceeding
   DOI: [10.1109/PVSC59419.2025.11132966](https://doi.org/10.1109/PVSC59419.2025.11132966)
 
+## Updates
+
+- Sep. 30th  2025: Please attend our webinar on Nov. 17th. Sign up here [www.duramat.org/news-and-events/webinars](https://www.duramat.org/news-and-events/webinars)
+
 ## Installation
 
 Clone and install:
@@ -51,6 +55,3 @@ cd pvcracks
 pip install -r vae/requirements.txt
 pip install -r retrain/requirements.txt
 
-## Updates
-
-- Sep. 30th  2025: Please attend our webinar on Nov. 17th. Sign up here [www.duramat.org/news-and-events/webinars](https://www.duramat.org/news-and-events/webinars)
