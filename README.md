@@ -34,8 +34,7 @@ Below is a schematic of the repos architecture:
 
 - **Variational Autoencoder (VAE)**  
   EUPVSEC 2024 conference proceeding  
-  DOI: [10.4229/EUPVSEC2024/3BO.15.6](https://doi.org/10.4229/EUPVSEC2024/3BO.15.6)  
-  [Proceedings](https://userarea.eupvsec.org/proceedings/EU-PVSEC-2024/3BO.15.6/)
+  DOI: [10.4229/EUPVSEC2024/3BO.15.6](https://doi.org/10.4229/EUPVSEC2024/3BO.15.6)
 
 - **Power-Loss Model (XGBoost)**  
   2025 IEEE 53rd Photovoltaic Specialists Conference (PVSC) proceeding
@@ -51,3 +50,7 @@ cd pvcracks
 
 pip install -r vae/requirements.txt
 pip install -r retrain/requirements.txt
+
+## Updates
+
+- Sep. 30th  2025: Please attend our webinar on Nov. 17th. Sign up here [www.duramat.org/news-and-events/webinars](https://www.duramat.org/news-and-events/webinars)
