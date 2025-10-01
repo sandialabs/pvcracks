@@ -27,6 +27,15 @@ Below is a schematic of the repos architecture:
 
 <img src="docs/pvcracks_sch.png" width="800">
 
+## Data & Models
+
+All datasets, trained model weights, and additional resources are hosted on DuraMAT DataHub:  
+[https://datahub.duramat.org/project/pv-crack-stress-and-power-loss](https://datahub.duramat.org/project/pv-crack-stress-and-power-loss)
+
+- Cell-level EL & electrical data (data publication to follow)
+- MultiSolSegment training images and weights (DOI: [10.21948/2587738](https://doi.org/10.21948/2587738))  
+- Pretrained VAE weigths ([datahub.duramat.org](https://datahub.duramat.org/dataset/pvcracks-trained-vae-model))
+
 ## Publications
 
 - **MultiSolSegment**  
