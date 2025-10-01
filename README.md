@@ -1,12 +1,12 @@
 <p align="left">
   <img
     src="docs/pvcracks_logo.png"
-    height="120"
+    height="140"
     alt="PVCracks logo"
   />
   <img
     src="docs/duramat_logo.png"
-    height="120"
+    height="140"
     alt="DuraMAT logo"
   />
 </p>
