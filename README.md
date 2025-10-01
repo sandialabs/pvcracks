@@ -1,4 +1,4 @@
-<p align="center">
+<p align="left">
   <img
     src="docs/pvcracks_logo.png"
     height="150"
@@ -10,6 +10,7 @@
     alt="DuraMAT logo"
   />
 </p>
+
 # PVCracks
 
 ## Latest Release
