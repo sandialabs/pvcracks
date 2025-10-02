@@ -74,4 +74,5 @@ cd pvcracks
 
 pip install -r vae/requirements.txt
 pip install -r retrain/requirements.txt
+pip install -r powerloss/requirements.txt
 
