@@ -20,6 +20,7 @@
 ## License
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 License details can be found in: 
 vae/License/
 
