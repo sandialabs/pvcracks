@@ -21,8 +21,7 @@
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-License details can be found in: 
-vae/License/
+License details can be found in the "License" folder
 
 ## Overview
 
@@ -74,7 +73,7 @@ Clone and install:
 git clone https://github.com/yourusername/pvcracks.git
 cd pvcracks
 
-pip install -r vae/requirements.txt
-pip install -r retrain/requirements.txt
-pip install -r powerloss/requirements.txt
+pip install -r pvcracks/vae/requirements_vae.txt
+pip install -r pvcracks/powerloss/requirements_powerloss.txt
+pip install -r pvcracks/MultiSolSegment/requirements_MultiSolSegment.txt
 
