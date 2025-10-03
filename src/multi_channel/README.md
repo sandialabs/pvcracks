@@ -1,13 +1,13 @@
 # Generating masks for formatted images and masks on Supervisely
 
-1. `chmod +x create_directories.sh` and then `./create_directories.sh <root folder>` to create the required file structure.
+1. `chmod +x create_channeled_directories.sh` and then `./create_channeled_directories.sh <root folder>` to create the required file structure.
 
 2. Download the dataset from Supervisely:
    1. Download in the Supervisely format, select "json annotations + images", and don't select "fix image extension..".
    2. Leave advanced settings as default.
    3. Place the image files to `/img/orignal/`. Place `.json` files in `/ann_json/`.
 
-3. Convert `.json` mask to a `.npy` mask using `get_masks.ipynb`
+3. Convert `.json` mask to a `.npy` mask using `get_channeled_masks.ipynb`
    1. This notebook takes annotations in the form of bitmaps, and transforms them into a five-layer tensor of 1s and 0s before squashing the mask into a 2 dimensional array of integers in [0, 1, 2, 3, 4]
    2. The order in which layers are stacked determines priority in the final 2D target. The final target can only have one value for each pixel location.
    3. Masks with cracks prioritized are saved into `/ann_npy_split_cracks/original/`
@@ -68,6 +68,10 @@ To remove `.DS_Store` files on Mac, run this in `/pvcracks` and `/pvcracks_data`
 ```
 find ./ -type f -name ".DS_Store" -exec rm -f {} +
 ```
+
+Note that the presence of a `.DS_Store` file (and thus the necessity to run the above command) is often signified by the following error when running `train_functions.get_save_dir()`:
+
+`ValueError: invalid literal for int() with base 10: 'e'`
 
 ----
 

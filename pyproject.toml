@@ -52,6 +52,7 @@ dependencies = [
     "mpmath==1.3.0",
     "narwhals==1.38.2",
     "nbformat==5.10.4",
+    "nbqa>=1.9.1",
     "nest-asyncio==1.6.0",
     "networkx==3.4.2",
     "numpy==2.2.5",
