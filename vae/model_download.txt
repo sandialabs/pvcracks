@@ -1,4 +1,0 @@
-The model is available to download from:
-https://datahub.duramat.org/dataset/pvcracks-trained-vae-model
-
-Updated models will be available under the same link.

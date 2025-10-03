@@ -20,8 +20,8 @@
 ## License
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-License details can be found in: 
-vae/License/
+
+License details can be found in the "License" folder
 
 ## Overview
 
@@ -44,8 +44,9 @@ All datasets, trained model weights, and additional resources are hosted on Dura
 [https://datahub.duramat.org/project/pv-crack-stress-and-power-loss](https://datahub.duramat.org/project/pv-crack-stress-and-power-loss)
 
 - Cell-level EL & electrical data (data publication to follow)
-- MultiSolSegment training images and weights (DOI: [10.21948/2587738](https://doi.org/10.21948/2587738))  
-- Pretrained VAE weigths ([datahub.duramat.org](https://datahub.duramat.org/dataset/pvcracks-trained-vae-model))
+- MultiSolSegment training images (DOI: [10.21948/2587738](https://doi.org/10.21948/2587738))
+- MultiSolSegment model weights ([datahub.duramat.org/dataset/multisolsegment-trained-model-weights](https://datahub.duramat.org/dataset/multisolsegment-trained-model-weights))  
+- VAE model weigths ([datahub.duramat.org/dataset/pvcracks-trained-vae-model](https://datahub.duramat.org/dataset/pvcracks-trained-vae-model))
 
 ## Publications
 
@@ -72,6 +73,7 @@ Clone and install:
 git clone https://github.com/yourusername/pvcracks.git
 cd pvcracks
 
-pip install -r vae/requirements.txt
-pip install -r retrain/requirements.txt
+pip install -r pvcracks/vae/requirements_vae.txt
+pip install -r pvcracks/powerloss/requirements_powerloss.txt
+pip install -r pvcracks/MultiSolSegment/requirements_MultiSolSegment.txt
 
