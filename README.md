@@ -45,8 +45,9 @@ All datasets, trained model weights, and additional resources are hosted on Dura
 [https://datahub.duramat.org/project/pv-crack-stress-and-power-loss](https://datahub.duramat.org/project/pv-crack-stress-and-power-loss)
 
 - Cell-level EL & electrical data (data publication to follow)
-- MultiSolSegment training images and weights (DOI: [10.21948/2587738](https://doi.org/10.21948/2587738))  
-- Pretrained VAE weigths ([datahub.duramat.org](https://datahub.duramat.org/dataset/pvcracks-trained-vae-model))
+- MultiSolSegment training images (DOI: [10.21948/2587738](https://doi.org/10.21948/2587738))
+- MultiSolSegment model weights ([datahub.duramat.org/dataset/multisolsegment-trained-model-weights](https://datahub.duramat.org/dataset/multisolsegment-trained-model-weights))  
+- VAE model weigths ([datahub.duramat.org/dataset/pvcracks-trained-vae-model](https://datahub.duramat.org/dataset/pvcracks-trained-vae-model))
 
 ## Publications
 
