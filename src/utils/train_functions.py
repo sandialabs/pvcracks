@@ -17,7 +17,7 @@ def load_dataset(root, full_set=False):
         return img_functions.SolarDataset(
             root, image_folder="img/all", mask_folder="ann/all", transforms=transformers
         )
-    
+
     train_dataset = img_functions.SolarDataset(
         root, image_folder="img/train", mask_folder="ann/train", transforms=transformers
     )

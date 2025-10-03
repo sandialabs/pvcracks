@@ -1,7 +1,10 @@
 import torch
 import matplotlib.pyplot as plt
 
-def channeled_inference_and_show(data_loader, device, model, category_mapping, idx, threshold=0.5):
+
+def channeled_inference_and_show(
+    data_loader, device, model, category_mapping, idx, threshold=0.5
+):
     # Get the preprocessed image and multi-hot ground truth mask
     img, mask = data_loader.dataset.__getitem__(idx)
     img = img.to(device)
