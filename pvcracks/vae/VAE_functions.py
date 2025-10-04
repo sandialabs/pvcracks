@@ -17,7 +17,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from pvcracks.vae.custom_dataset import CustomDataset
 from termcolor import colored
-from pytorch_ssim import SSIM #don't use pip installed version (not maintained). Use: https://github.com/Po-Hsun-Su/pytorch-ssim
+from pvcracks.vae.pytorch_ssim import SSIM #don't use pip installed version (not maintained). Use: https://github.com/Po-Hsun-Su/pytorch-ssim
 from torchvision import transforms
 import os
 
