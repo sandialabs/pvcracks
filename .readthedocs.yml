@@ -1,20 +1,17 @@
 # .readthedocs.yml
 version: 2
 
-sphinx:
-  # Path to your Sphinx configuration file.
-  configuration: docs/conf.py
-
 build:
   os: ubuntu-24.04
   tools:
     python: "3.12"
 
-# point RTD at your Sphinx sources
-docs_dir: docs
-
 python:
   install:
     - method: pip
-      path: .
+      path: .                   # pip install -e .
     - requirements: docs/requirements.txt
+
+sphinx:
+  # path to your conf.py
+  configuration: docs/conf.py
