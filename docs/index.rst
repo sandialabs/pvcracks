@@ -1,13 +1,6 @@
 pvcracks Documentation
 =======================
 
-.. toctree::
-   :maxdepth: 1
-   :titlesonly:
-   :caption: User Guide
-
-   ../README.md
-
 Examples
 ========
 
@@ -29,6 +22,7 @@ API Reference
    :titlesonly:
    :caption: API Reference
 
+   api/pvcracks 
    api/pvcracks.powerloss
    api/pvcracks.MultiSolSegment
    api/pvcracks.vae
