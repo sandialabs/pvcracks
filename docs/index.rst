@@ -29,10 +29,10 @@ API Reference
    :titlesonly:
    :caption: API Reference
 
-   api/pvcracks
-   api/pvcracks.vae
    api/pvcracks.powerloss
    api/pvcracks.MultiSolSegment
+   api/pvcracks.vae
+
 
 Indices and tables
 ==================
