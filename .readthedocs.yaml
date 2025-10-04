@@ -12,5 +12,4 @@ docs_dir: docs
 python:
   install:
     - method: pip
-      path: .                 # pip install -e .
     - requirements: docs/requirements.txt
