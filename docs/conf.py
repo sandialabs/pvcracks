@@ -66,8 +66,8 @@ html_theme_options = {
 html_static_path = ['_static']
 
 # Logo and favicon
-html_logo = '_static/pvcracks_logo.png'
-html_favicon = '_static/duramat_logo.png'
+html_logo = 'docs/pvcracks_logo.png'
+html_favicon = 'docs/duramat_logo.png'
 
 # -- Autodoc options ---------------------------------------------------------
 
