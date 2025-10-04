@@ -1,5 +1,6 @@
 # docs/requirements.txt
--e ..
+-e .
+
 sphinx==5.3.0
 sphinx-rtd-theme==1.1.1
 sphinx-notfound-page==1.0.2
