@@ -31,11 +31,14 @@ except ImportError:
 
 # Sphinx extensions
 extensions = [
-    'sphinx.ext.autodoc',    # auto-generate docs from docstrings
-    'sphinx.ext.viewcode',   # add links to highlighted source
-    'sphinx.ext.napoleon',   # support Google/Numpy style docstrings
-    'sphinx.ext.mathjax',    # render math in HTML
+  'sphinx.ext.autodoc',
+  'sphinx.ext.viewcode',
+  'sphinx.ext.napoleon',
+  'sphinx.ext.mathjax',
+  'nbsphinx',           # <-- add this
 ]
+# optional: never execute the notebooks during build
+nbsphinx_execute = 'never'
 
 # Where to look for templates
 templates_path = ['_templates']
