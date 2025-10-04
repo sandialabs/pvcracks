@@ -43,11 +43,11 @@ templates_path = ['_templates']
 # The master toctree document
 master_doc = 'index'
 
-# Support both reStructuredText and Markdown
-source_suffix = {
-    '.rst': 'restructuredtext',
-    '.md': 'markdown',
-}
+# # Support both reStructuredText and Markdown
+# source_suffix = {
+#     '.rst': 'restructuredtext',
+#     '.md': 'markdown',
+# }
 
 # Patterns to ignore when looking for source files.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
@@ -63,7 +63,7 @@ html_theme_options = {
 
 # Path to static files (css, javascript, images)
 # Create docs/_static/ and copy your logos in there.
-html_static_path = ['.', '_static']
+html_static_path = ['.']
 
 # Logo and favicon
 html_logo = 'pvcracks_logo.png'
