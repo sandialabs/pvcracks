@@ -35,7 +35,6 @@ extensions = [
     'sphinx.ext.viewcode',   # add links to highlighted source
     'sphinx.ext.napoleon',   # support Google/Numpy style docstrings
     'sphinx.ext.mathjax',    # render math in HTML
-    'myst_parser',           # support Markdown (.md) files
 ]
 
 # Where to look for templates
