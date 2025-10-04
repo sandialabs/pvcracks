@@ -26,7 +26,3 @@ VAE helper modules
 .. automodule:: pvcracks.vae.VAE_model_3CH
    :members:
    :undoc-members:
-
-.. automodule:: pvcracks.vae.VAE_training_1CH
-   :members:
-   :undoc-members:
