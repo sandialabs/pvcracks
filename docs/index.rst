@@ -6,9 +6,18 @@ pvcracks Documentation
    :caption: User Guide:
 
    ../README.md           <--- your top‐level README
+Examples
+========
+
+.. toctree::
+   :maxdepth: 1
+   :titlesonly:
+   :caption: Notebook Examples
+
    Examples/example_generate_images.ipynb
    Examples/example_validate_pvimage.ipynb
    Examples/example_xgboost.ipynb
+   Examples/example_load_3CH-VAE.ipynb
 
 .. toctree::
    :maxdepth: 1
