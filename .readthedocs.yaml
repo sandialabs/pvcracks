@@ -1,19 +1,14 @@
 # .readthedocs.yml
-# Read the Docs v2 config: 
-# https://docs.readthedocs.io/en/stable/config-file/v2.html
-
 version: 2
 
-# Which build image & Python version to use
 build:
   os: ubuntu-24.04
   tools:
     python: "3.12"
 
-# Where your Sphinx sources live
+# point RTD at your Sphinx sources
 docs_dir: docs
 
-# Install steps before building the docs
 python:
   install:
     - method: pip
