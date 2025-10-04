@@ -2,10 +2,12 @@ pvcracks Documentation
 =======================
 
 .. toctree::
-   :maxdepth: 2
-   :caption: User Guide:
+   :maxdepth: 1
+   :titlesonly:
+   :caption: User Guide
 
-   ../README.md           <--- your top‐level README
+   ../README.md
+
 Examples
 ========
 
@@ -19,9 +21,13 @@ Examples
    Examples/example_xgboost.ipynb
    Examples/example_load_3CH-VAE.ipynb
 
+API Reference
+=============
+
 .. toctree::
    :maxdepth: 1
-   :caption: API Reference:
+   :titlesonly:
+   :caption: API Reference
 
    api/pvcracks
    api/pvcracks.vae
