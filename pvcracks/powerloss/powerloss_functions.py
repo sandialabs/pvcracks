@@ -46,26 +46,33 @@ def predict_power_and_voc(
 ) -> pd.DataFrame:
     """
     Given latent vectors, predict:
-      - power loss (%) using the pmpp model
-      - Voc difference (%) using the Voc model
+    
+    - power loss (%) using the pmpp model  
+    - Voc difference (%) using the Voc model
 
     Parameters
     ----------
     latent_vectors : array-like
-        Either
-          - a 2D numpy array of shape (n_samples, latent_dim), or
-          - a 1D object-dtype numpy array / list of 1D arrays (each of length latent_dim)
+        Either:
+
+        - a 2D numpy array of shape (n_samples, latent_dim)
+        - a 1D object-dtype numpy array or list of 1D arrays (each of length latent_dim)
+
     pmpp_model : xgboost.XGBRegressor
         Loaded model for pmpp_diff_%.
+
     voc_model : xgboost.XGBRegressor
         Loaded model for Voc_diff_%.
 
+
     Returns
     -------
-    results : pandas.DataFrame
+    pandas.DataFrame
         DataFrame with columns:
-          - "power_loss_%"
-          - "Voc_diff_%"
+
+        - ``power_loss_%``
+        - ``Voc_diff_%``
+
         and one row per input latent vector.
     """
     # Convert to numpy array
@@ -82,7 +89,7 @@ def predict_power_and_voc(
 
     # Make predictions
     power_loss_preds = pmpp_model.predict(X)
-    voc_diff_preds  = voc_model.predict(X)
+    voc_diff_preds   = voc_model.predict(X)
 
     # Pack into DataFrame
     results = pd.DataFrame({

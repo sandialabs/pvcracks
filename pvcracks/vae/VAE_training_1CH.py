@@ -16,14 +16,14 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from custom_dataset import CustomDataset, FixedRotation, FixedHorizontalFlip, FixedVerticalFlip
+from pvcracks.vae.custom_dataset import CustomDataset, FixedRotation, FixedHorizontalFlip, FixedVerticalFlip
 from termcolor import colored
-from pytorch_ssim import SSIM #don't use pip installed version, is not maintained
+from pvcracks.vae.pytorch_ssim import SSIM #don't use pip installed version, is not maintained
 from torchvision import transforms
 import os
 from pathlib import Path
 
-from VAE_functions import preprocess, vae_loss, encode_image, decode_latent_vector, show_input_output_images, ssim_input_output, generate_random_images, show_generated_images, set_seeds
+from pvcracks.vae.VAE_functions import preprocess, vae_loss, encode_image, decode_latent_vector, show_input_output_images, ssim_input_output, generate_random_images, show_generated_images, set_seeds
 
 #Set deterministic backend
 torch.backends.cudnn.benchmark = False
@@ -82,7 +82,7 @@ test_augmented = CustomDataset(test, transform=transform)
 train_loader = DataLoader(train_augmented, batch_size=batch_size, shuffle=True, num_workers=1)
 
 #Load Encoder, Decoder, VAE
-from VAE_model import Encoder, Decoder, VAE
+from pvcracks.vae.VAE_model_1CH import Encoder, Decoder, VAE
 
 # Initialize the VAE model and optimizer
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
