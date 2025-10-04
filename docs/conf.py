@@ -63,11 +63,11 @@ html_theme_options = {
 
 # Path to static files (css, javascript, images)
 # Create docs/_static/ and copy your logos in there.
-html_static_path = ['_static']
+html_static_path = ['.', '_static']
 
 # Logo and favicon
-html_logo = 'docs/pvcracks_logo.png'
-html_favicon = 'docs/duramat_logo.png'
+html_logo = 'pvcracks_logo.png'
+html_favicon = 'duramat_logo.png'
 
 # -- Autodoc options ---------------------------------------------------------
 
