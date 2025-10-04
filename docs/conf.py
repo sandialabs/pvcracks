@@ -43,11 +43,10 @@ templates_path = ['_templates']
 # The master toctree document
 master_doc = 'index'
 
-# # Support both reStructuredText and Markdown
-# source_suffix = {
-#     '.rst': 'restructuredtext',
-#     '.md': 'markdown',
-# }
+# Support both reStructuredText and Markdown
+source_suffix = {
+    '.rst': 'restructuredtext',
+}
 
 # Patterns to ignore when looking for source files.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
