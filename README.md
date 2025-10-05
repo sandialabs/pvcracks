@@ -21,7 +21,7 @@
 
 [![License: BSD 3-Clause](https://img.shields.io/badge/license-BSD%203--Clause-blue.svg)](LICENSE)
 
-License details can be found in the "License" folder
+License details can be found in the "License" folder.
 
 ## Overview
 
@@ -34,7 +34,12 @@ PVCracks is the DuraMAT project that investigates the effects of cracks on power
 
 ## Documentation
 
-Below is a schematic of the repos architecture:
+[![Read the Docs](https://readthedocs.org/projects/pvcracks/badge/?version=latest)](https://pvcracks.readthedocs.io/en/latest/index.html#)
+
+Full online documentation is available at  
+https://pvcracks.readthedocs.io/en/latest/index.html#
+
+Below is a schematic of the repo’s architecture:
 
 <img src="docs/pvcracks_sch.png" width="800">
 
@@ -43,10 +48,10 @@ Below is a schematic of the repos architecture:
 All datasets, trained model weights, and additional resources are hosted on DuraMAT DataHub:  
 [https://datahub.duramat.org/project/pv-crack-stress-and-power-loss](https://datahub.duramat.org/project/pv-crack-stress-and-power-loss)
 
-- Cell-level EL & electrical data (data publication to follow)
-- MultiSolSegment training images (DOI: [10.21948/2587738](https://doi.org/10.21948/2587738))
+- Cell-level EL & electrical data (data publication to follow)  
+- MultiSolSegment training images (DOI: [10.21948/2587738](https://doi.org/10.21948/2587738))  
 - MultiSolSegment model weights ([datahub.duramat.org/dataset/multisolsegment-trained-model-weights](https://datahub.duramat.org/dataset/multisolsegment-trained-model-weights))  
-- VAE model weigths ([datahub.duramat.org/dataset/pvcracks-trained-vae-model](https://datahub.duramat.org/dataset/pvcracks-trained-vae-model))
+- VAE model weights ([datahub.duramat.org/dataset/pvcracks-trained-vae-model](https://datahub.duramat.org/dataset/pvcracks-trained-vae-model))
 
 ## Publications
 
@@ -58,22 +63,21 @@ All datasets, trained model weights, and additional resources are hosted on Dura
   DOI: [10.4229/EUPVSEC2024/3BO.15.6](https://doi.org/10.4229/EUPVSEC2024/3BO.15.6)
 
 - **Power-Loss Model (XGBoost)**  
-  2025 IEEE 53rd Photovoltaic Specialists Conference (PVSC) proceeding
+  2025 IEEE 53rd Photovoltaic Specialists Conference (PVSC) proceeding  
   DOI: [10.1109/PVSC59419.2025.11132966](https://doi.org/10.1109/PVSC59419.2025.11132966)
 
 ## Updates
 
-- Sep. 30th  2025: Please attend our webinar on Nov. 17th. Sign up here [www.duramat.org/news-and-events/webinars](https://www.duramat.org/news-and-events/webinars)
+- Sep. 30th 2025: Please attend our webinar on Nov. 17th. Sign up here:  
+  [www.duramat.org/news-and-events/webinars](https://www.duramat.org/news-and-events/webinars)
 
 ## Installation
 
 Clone and install:
 
 ```bash
-git clone https://github.com/yourusername/pvcracks.git
+git clone https://github.com/NormanJost/pvcracks.git
 cd pvcracks
 
-pip install -r pvcracks/vae/requirements_vae.txt
-pip install -r pvcracks/powerloss/requirements_powerloss.txt
-pip install -r pvcracks/MultiSolSegment/requirements_MultiSolSegment.txt
-
+# Install the package and its dependencies
+pip install -r docs/requirements.txt
