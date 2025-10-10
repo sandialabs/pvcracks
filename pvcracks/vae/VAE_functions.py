@@ -14,19 +14,11 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
-<<<<<<<< HEAD:src/vae/VAE_functions.py
 from termcolor import colored
-from pytorch_ssim import (
+from pvcracks.vae.pytorch_ssim import (
     SSIM,
 )  # don't use pip installed version (not maintained). Use: https://github.com/Po-Hsun-Su/pytorch-ssim
 
-========
-from pvcracks.vae.custom_dataset import CustomDataset
-from termcolor import colored
-from pvcracks.vae.pytorch_ssim import SSIM #don't use pip installed version (not maintained). Use: https://github.com/Po-Hsun-Su/pytorch-ssim
-from torchvision import transforms
-import os
->>>>>>>> origin/main:pvcracks/vae/VAE_functions.py
 
 def set_seeds(seed=50, multiGPU=False):
     """

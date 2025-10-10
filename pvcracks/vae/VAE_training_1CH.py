@@ -6,9 +6,10 @@ Created on Mon Aug  7 12:04:49 2023
 """
 
 import time as t
-import sys
 
 t0 = t.time()  # timerimport numpy as np
+
+import sys
 import matplotlib.pyplot as plt
 from skimage import io
 import numpy as np
@@ -33,6 +34,9 @@ from VAE_functions import (
     generate_random_images,
     show_generated_images,
 )
+import matplotlib.pyplot as plt
+from VAE_model import VAE
+
 
 # Set deterministic backend
 torch.backends.cudnn.benchmark = False
@@ -93,7 +97,6 @@ train_loader = DataLoader(
 )
 
 # Load Encoder, Decoder, VAE
-from VAE_model import VAE
 
 # Initialize the VAE model and optimizer
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -164,7 +167,6 @@ plt.title("Training Loss per Epoch")
 plt.savefig("CurrentResults/Trainingloss.png")
 plt.show()
 
-import matplotlib.pyplot as plt
 
 num_images = 99
 test_loader = DataLoader(test, batch_size=num_images, shuffle=True, num_workers=4)
