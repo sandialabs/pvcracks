@@ -49,8 +49,8 @@ All datasets, trained model weights, and additional resources are hosted on Dura
 [https://datahub.duramat.org/project/pv-crack-stress-and-power-loss](https://datahub.duramat.org/project/pv-crack-stress-and-power-loss)
 
 - Cell-level EL & electrical data (data publication to follow)  
-- MultiSolSegment training images (DOI: [10.21948/2587738](https://doi.org/10.21948/2587738))  
-- MultiSolSegment model weights ([datahub.duramat.org/dataset/multisolsegment-trained-model-weights](https://datahub.duramat.org/dataset/multisolsegment-trained-model-weights))  
+- MultiSolSegment training images and masks (DOI: [10.21948/2587738](https://doi.org/10.21948/2587738))  
+- MultiSolSegment model weights ([datahub.duramat.org/dataset/multisolsegment_weights](https://datahub.duramat.org/dataset/multisolsegment_weights))
 - VAE model weights ([datahub.duramat.org/dataset/pvcracks-trained-vae-model](https://datahub.duramat.org/dataset/pvcracks-trained-vae-model))
 
 ## Publications
@@ -73,11 +73,18 @@ All datasets, trained model weights, and additional resources are hosted on Dura
 
 ## Installation
 
+Install [uv](https://docs.astral.sh/uv/).
+
 Clone and install:
 
 ```bash
-git clone https://github.com/NormanJost/pvcracks.git
+git clone git@github.com:sandialabs/pvcracks.git
 cd pvcracks
 
 # Install the package and its dependencies
-pip install -r docs/requirements.txt
+uv sync
+```
+
+If there are errors when importing `utils`, run `uv pip install -e .` in `pvcracks/` to enable intra-project imports.
+
+An auto-generated `requirements.txt` file for use with `pip` has also been provided for your convenience, but compatibility is not guaranteed.
