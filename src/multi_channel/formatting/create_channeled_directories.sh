@@ -16,6 +16,7 @@ mkdir -p "$ROOT_FOLDER/ann/mirrored_y"
 mkdir -p "$ROOT_FOLDER/ann/mirrored_xy"
 mkdir -p "$ROOT_FOLDER/ann/train"
 mkdir -p "$ROOT_FOLDER/ann/val"
+mkdir -p "$ROOT_FOLDER/ann/json"
 
 mkdir -p "$ROOT_FOLDER/checkpoints/"
 

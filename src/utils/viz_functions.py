@@ -14,12 +14,12 @@ def channeled_inference_and_show(
 
     # --- Run inference ---
     # Get raw logits from the model, then apply Sigmoid and threshold
-    logits = model(img.unsqueeze(0)).detach().cpu()  # shape: [1, 4, H, W]
-    probs = torch.sigmoid(logits)  # shape: [1, 4, H, W]
-    pred_mask = (probs > threshold).float().squeeze(0).numpy()  # shape: [4, H, W]
+    logits = model(img.unsqueeze(0)).detach().cpu()  # shape: [1, n_classes, H, W]
+    probs = torch.sigmoid(logits)  # shape: [1, n_classes, H, W]
+    pred_mask = (probs > threshold).float().squeeze(0).numpy()  # shape: [n_classes, H, W]
 
-    # Ground truth is assumed to be already a 4-channel multi-hot mask.
-    gt_mask = mask.cpu().numpy()  # shape: [4, H, W]
+    # Ground truth is assumed to be already a n_classes-channel multi-hot mask.
+    gt_mask = mask.cpu().numpy()  # shape: [n_classes, H, W]
 
     # --- Visualization ---
     # Create a grid with 3 rows and 4 columns:

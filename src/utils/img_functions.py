@@ -94,11 +94,17 @@ class SolarDataset(VisionDataset):
 
     def __len__(self):
         return len(self.image_list)
+    
+    def __get_img_path__(self, index):
+        return self.image_list[index]
+
+    def __get_mask_path__(self, index):
+        return self.mask_list[index]
 
     def __getname__(self, index):
         image_name = os.path.splitext(os.path.split(self.image_list[index])[-1])[0]
         mask_name = os.path.splitext(os.path.split(self.mask_list[index])[-1])[0]
-
+        
         if image_name == mask_name:
             return image_name
         else:
