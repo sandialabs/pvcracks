@@ -50,8 +50,8 @@ All datasets, trained model weights, and additional resources are hosted on Dura
 
 - Cell-level EL & electrical data (data publication to follow)  
 - MultiSolSegment training images and masks (DOI: [10.21948/2587738](https://doi.org/10.21948/2587738))  
-- MultiSolSegment model weights ([datahub.duramat.org/dataset/multisolsegment_weights](https://datahub.duramat.org/dataset/multisolsegment_weights))
-- VAE model weights ([datahub.duramat.org/dataset/pvcracks-trained-vae-model](https://datahub.duramat.org/dataset/pvcracks-trained-vae-model))
+- MultiSolSegment model weights (DOI: [10.21948/2997859](https://doi.org/10.21948/2997859))
+- VAE model weights (DOI: [10.21948/2997860](https://doi.org/10.21948/2997860))
 
 ## Publications
 
