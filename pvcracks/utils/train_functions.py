@@ -1,9 +1,11 @@
-from typing_extensions import OrderedDict
-from typing import Union
-from utils.unet_model import construct_unet
-from utils import img_functions
-import torch
 import os
+from typing import Union
+
+import torch
+from typing_extensions import OrderedDict
+
+from .unet_model import construct_unet
+from . import img_functions
 
 
 def load_dataset(

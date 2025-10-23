@@ -83,8 +83,7 @@ cd pvcracks
 
 # Install the package and its dependencies
 uv sync
+uv pip install -e . # enable intra-project imports
 ```
-
-If there are errors when importing `utils`, run `uv pip install -e .` in `pvcracks/` to enable intra-project imports.
 
 An auto-generated `requirements.txt` file for use with `pip` has also been provided for your convenience, but compatibility is not guaranteed.

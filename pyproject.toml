@@ -1,7 +1,7 @@
 [project]
 name = "pvcracks"
 version = "0.1.0"
-description = "Add your description here"
+description = "PVCracks: crack-induced power loss & crack progression in PV cells"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
