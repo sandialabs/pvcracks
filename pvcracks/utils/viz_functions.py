@@ -1,10 +1,20 @@
-import torch
 import matplotlib.pyplot as plt
+import torch
 
 
 def channeled_inference_and_show(
     data_loader, device, model, category_mapping, idx, threshold=0.5
 ):
+    """Run inference on a single dataset element and visualize predictions per class.
+
+    Args:
+        data_loader (torch.utils.data.DataLoader): Loader that provides dataset access.
+        device (torch.device): Computation device for running the model.
+        model (torch.nn.Module): Trained segmentation network returning channel logits.
+        category_mapping (Mapping[int, str]): Mapping from class index to display name.
+        idx (int): Index of the sample to visualize inside the dataset.
+        threshold (float, optional): Probability cutoff for converting logits to masks.
+    """
     # Get the preprocessed image and multi-hot ground truth mask
     img, mask = data_loader.dataset.__getitem__(idx)
     img = img.to(device)
@@ -16,7 +26,9 @@ def channeled_inference_and_show(
     # Get raw logits from the model, then apply Sigmoid and threshold
     logits = model(img.unsqueeze(0)).detach().cpu()  # shape: [1, n_classes, H, W]
     probs = torch.sigmoid(logits)  # shape: [1, n_classes, H, W]
-    pred_mask = (probs > threshold).float().squeeze(0).numpy()  # shape: [n_classes, H, W]
+    pred_mask = (
+        (probs > threshold).float().squeeze(0).numpy()
+    )  # shape: [n_classes, H, W]
 
     # Ground truth is assumed to be already a n_classes-channel multi-hot mask.
     gt_mask = mask.cpu().numpy()  # shape: [n_classes, H, W]

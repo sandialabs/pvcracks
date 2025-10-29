@@ -4,8 +4,8 @@ from typing import Union
 import torch
 from typing_extensions import OrderedDict
 
-from .unet_model import construct_unet
 from . import img_functions
+from .unet_model import construct_unet
 
 
 def load_dataset(
@@ -14,6 +14,16 @@ def load_dataset(
     img_functions.SolarDataset,
     tuple[img_functions.SolarDataset, img_functions.SolarDataset],
 ]:
+    """Instantiate dataset objects with a common preprocessing pipeline.
+
+    Args:
+        root (str or Path): Root directory containing image and annotation folders.
+        full_set (bool, optional): When `True`, return the combined dataset; otherwise
+            return the train/validation split.
+
+    Returns:
+        SolarDataset or tuple[SolarDataset, SolarDataset]: Dataset(s) configured for training.
+    """
     transformers = img_functions.Compose(
         [
             img_functions.ChanneledFixResize(256),
@@ -41,10 +51,22 @@ def load_dataset(
 def load_device_and_model(
     category_mapping, existing_weight_path=None
 ) -> tuple[torch.device, torch.nn.Module]:
-    
-    # NOTE: change this based on available hardware
-    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    device = torch.device("mps" if torch.mps.is_available() else "cpu")
+    """Select an execution device and construct a DataParallel UNet model.
+
+    Args:
+        category_mapping (Mapping[str, int]): Mapping from class names to indices.
+        existing_weight_path (str or Path, optional): Checkpoint file to load into the model.
+
+    Returns:
+        tuple[torch.device, torch.nn.Module]: Active device and initialized model module.
+    """
+
+    if torch.cuda.is_available():
+        device = torch.device("cuda:0")
+    elif torch.backends.mps.is_available():
+        device = torch.device("mps")
+    else:
+        device = torch.device("cpu")
 
     unet = construct_unet(len(category_mapping))
     unet = torch.nn.DataParallel(unet)
@@ -64,6 +86,15 @@ def load_device_and_model(
 
 
 def get_save_dir(base_dir, checkpoint_name) -> str:
+    """Create and return the next sequential checkpoint directory path.
+
+    Args:
+        base_dir (str or Path): Base directory that contains the `checkpoints` subfolder.
+        checkpoint_name (str): Prefix used when naming the new checkpoint directory.
+
+    Returns:
+        str: Absolute path to the newly created checkpoint directory.
+    """
     checkpoint_dir = base_dir + "/checkpoints/"
     folders = [folder for folder in os.listdir(checkpoint_dir)]
 

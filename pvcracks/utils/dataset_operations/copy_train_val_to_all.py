@@ -1,3 +1,9 @@
+"""
+Moves files from train and val folders to all folder.
+
+Note: if you download from the DuraMAT DataHub, you will not need this.
+"""
+
 # copy files in python
 
 import os
@@ -21,4 +27,3 @@ for root, dirs, files in os.walk(val):
     for file in files:
         shutil.copy(os.path.join(root, file), all)
         print(f"Copied {file} to {all}")
-

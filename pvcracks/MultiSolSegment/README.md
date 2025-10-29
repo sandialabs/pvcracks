@@ -1,6 +1,6 @@
 # Generating masks for formatted images and masks
 
-Note: this is for development, if you are downloading from Supervisely. If you are an end-user downloading from the DuraMat DataHub, skip to step 6.
+Note: this is for development, if you are downloading from Supervisely. **If you are an end-user downloading from the DuraMat DataHub, skip to step 6.**
 
 1. `chmod +x create_channeled_directories.sh` and then `./create_channeled_directories.sh <root folder>` to create the required file structure.
 
