@@ -15,7 +15,9 @@ This folder contains data to be used in the examples. Such as, electroluminescen
   • **Deg2**: after second mechanical degradation  
 
 ### Folder layout
-docs/data/EL/
+
+```text
+docs/data/EL
 ├── 209_A1
 │   ├── Deg1
 │   ├── Deg2
@@ -52,3 +54,4 @@ docs/data/EL/
     ├── Deg1
     ├── Deg2
     └── Init
+```
