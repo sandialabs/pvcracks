@@ -77,7 +77,7 @@ All datasets, trained model weights, and additional resources are hosted on Dura
 Clone and install:
 
 ```bash
-git clone git@github.com:NormanJost/pvcracks.git
+git clone git@github.com:sandialabs/pvcracks.git
 cd pvcracks
 
 # 1. Upgrade pip, setuptools, and wheel
