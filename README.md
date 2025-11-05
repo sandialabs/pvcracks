@@ -77,12 +77,14 @@ All datasets, trained model weights, and additional resources are hosted on Dura
 Clone and install:
 
 ```bash
-git clone git@github.com:sandialabs/pvcracks.git
+git clone git@github.com:NormanJost/pvcracks.git
 cd pvcracks
 
-# Install the package and its dependencies
-uv sync
-uv pip install -e . # enable intra-project imports
-```
+# 1. Upgrade pip, setuptools, and wheel
+pip install --upgrade pip setuptools wheel
 
-An auto-generated `requirements.txt` file for use with `pip` has also been provided for your convenience, but compatibility is not guaranteed.
+# 2. Install runtime dependencies (see requirements.txt for full list)
+pip install -r requirements.txt
+
+# 3. Install pvcracks in editable mode
+pip install -e .    # enables intra-project imports
