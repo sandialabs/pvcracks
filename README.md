@@ -68,7 +68,7 @@ All datasets, trained model weights, and additional resources are hosted on Dura
 
 ## Updates
 
-- Sep. 30th 2025: Please attend our webinar on Nov. 17th. Sign up here:  
+- Sep. 30th 2025: Please attend our webinar on Nov. 10th. Sign up here:  
   [www.duramat.org/news-and-events/webinars](https://www.duramat.org/news-and-events/webinars)
 
 ## Installation
