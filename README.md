@@ -31,7 +31,7 @@ PVCracks is the DuraMAT project that investigates the effects of cracks on power
 - **MultiSolSegment**: segmentation of cracks, busbars, and dark areas in electroluminescence (EL) images  
 - **Variational Autoencoder (VAE)**: parameterization & clustering of segmented data  
 - **XGBoost model**: estimation of power loss (ΔPMPP) per cell
-- **pvspice_lite**: spice toolset for simulating current-voltage (I_V) curves and building synthetic module I-Vs (more features to come) 
+- **pvspice_lite**: spice toolset for simulating current-voltage (I-V) curves and building synthetic module I-Vs (more features to come) 
 
 ## Documentation
 
