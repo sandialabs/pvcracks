@@ -20,8 +20,8 @@ X17 17 18 0    Cell Rs=0.0095950447475012 Rp=88.78696501004563 I=8.1602211503184
 * set the sweep for the apropriate voltage range in steps of V_Step
 dc V1 2.9971455493242216e-05 5.6895217036856325 0.001
 set filetype=ascii 
-write /ceph-home/nrjost/githome/pvcracks_dev2/pvcracks/pvspice_lite/solar_circuit.out
-write /ceph-home/nrjost/githome/pvcracks_dev2/pvcracks/pvspice_lite/solar_circuit.txt
+write /home/nrjost/githome/pvcracks/pvcracks/pvspice_lite/solar_circuit.out
+write /home/nrjost/githome/pvcracks/pvcracks/pvspice_lite/solar_circuit.txt
 
 quit
 .endc
