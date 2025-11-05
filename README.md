@@ -74,8 +74,6 @@ All datasets, trained model weights, and additional resources are hosted on Dura
 
 ## Installation
 
-Install [uv](https://docs.astral.sh/uv/).
-
 Clone and install:
 
 ```bash
