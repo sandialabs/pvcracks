@@ -1,0 +1,12 @@
+# Byte-compiled Python files
+__pycache__/
+*.py[cod]
+
+# Jupyter Notebook checkpoints
+**/.ipynb_checkpoints/
+
+# Sphinx build output
+docs/_build/
+
+# Editable install artifacts
+*.egg-info/
