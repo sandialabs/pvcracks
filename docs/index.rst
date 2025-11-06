@@ -95,12 +95,13 @@ Examples
    Examples/example_xgboost.ipynb
    Examples/example_minimodule_build.ipynb
 
-API Reference
-=============
+Modules
+=======
 
 .. toctree::
    :maxdepth: 1
    :titlesonly:
+   :caption: API Reference
 
    api/pvcracks.utils
    api/pvcracks.vae
