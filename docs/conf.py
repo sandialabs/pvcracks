@@ -4,8 +4,7 @@
 import os
 import sys
 
-# add the project root (one level up) to sys.path so that
-# `import pvcracks` works
+# add the project root (one level up) to sys.path
 sys.path.insert(0, os.path.abspath('..'))
 
 # -- Project information -----------------------------------------------------
@@ -36,7 +35,8 @@ extensions = [
   'sphinx.ext.viewcode',
   'sphinx.ext.napoleon',
   'sphinx.ext.mathjax',
-  'nbsphinx',           # <-- add this
+  'nbsphinx',
+  'myst_parser',
 ]
 # optional: never execute the notebooks during build
 nbsphinx_execute = 'never'
