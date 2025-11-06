@@ -3,11 +3,8 @@ pvcracks Documentation
 User Guide
 ----------
 
-.. toctree::
-   :maxdepth: 1
-   :titlesonly:
-
-   ../README.md
+```{include} ../README.md
+:parser: myst-parser
 
 Examples
 ========
