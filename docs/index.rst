@@ -3,9 +3,9 @@ pvcracks Documentation
 User Guide
 ----------
 
-.. toctree::
-   :maxdepth: 1
-   :titlesonly:
+#.. toctree::
+#   :maxdepth: 1
+#   :titlesonly:
 
    ../README.md
 
@@ -15,7 +15,7 @@ Examples
 .. toctree::
    :maxdepth: 1
    :titlesonly:
-   :caption: Notebook Examples
+   #:caption: Notebook Examples
 
    Examples/example_multisolsegment_cellELs.ipynb
    Examples/example_download_run_multisolsegment.ipynb
@@ -30,7 +30,7 @@ API Reference
 .. toctree::
    :maxdepth: 1
    :titlesonly:
-   :caption: API Reference
+   #:caption: API Reference
 
    api/pvcracks 
    api/pvcracks.powerloss
