@@ -20,6 +20,7 @@ Examples
    Examples/example_multisolsegment_cellELs.ipynb
    Examples/example_download_run_multisolsegment.ipynb
    Examples/example_load_3CH-VAE.ipynb
+   Examples/example_VAE_rapidELprocessing.ipynb
    Examples/example_xgboost.ipynb
    Examples/example_minimodule_build.ipynb
 
@@ -33,8 +34,9 @@ API Reference
 
    api/pvcracks 
    api/pvcracks.powerloss
-   api/pvcracks.MultiSolSegment
+   api/pvcracks.utils
    api/pvcracks.vae
+   api/pvcracks.pvspice_lite
 
 
 Indices and tables
