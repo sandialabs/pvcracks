@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.abspath('..'))
 project = 'PVCracks'
 authors = [
     "Norman Jost",
+    "Brandon K. Byford",
     "Ojas Sanghi",
     "Emma Cooper",
     "Jennifer L. Braid"
