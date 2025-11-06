@@ -3,10 +3,9 @@ PVCracks Documentation
 
 .. raw:: html
 
-   <p align="center">
-     <img src="pvcracks_logo.png" height="130" alt="PVCracks logo"/>
-     <img src="duramat_logo.png" height="130" alt="DuraMAT logo"/>
-   </p>
+.. image:: duramat_logo.png
+   :width: 800
+   :alt: Repository architecture schematic
 
 Overview
 --------
