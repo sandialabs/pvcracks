@@ -22,6 +22,8 @@ PVCracks is the DuraMAT project that investigates the effects of cracks on power
 Schematic
 ---------
 
+This is how the workflow is set up. In addition to the SPICE simulation capabilities that are being added.
+
 .. image:: pvcracks_sch.png
    :width: 800
    :alt: Repository architecture schematic
