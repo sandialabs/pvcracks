@@ -101,9 +101,8 @@ API Reference
 .. toctree::
    :maxdepth: 1
    :titlesonly:
-   :caption: API Reference
+   :caption:  
 
-   api/pvcracks
    api/pvcracks.utils
    api/pvcracks.vae
    api/pvcracks.powerloss
