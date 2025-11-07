@@ -10,13 +10,14 @@ PVCracks Documentation
 Overview
 --------
 
-PVCracks is the DuraMAT project that investigates the effects of cracks on power loss in photovoltaic (PV) solar cells and tracks crack progression over time. We provide:
+PVCracks is the DuraMAT project that investigates the effects of cracks on power loss in photovoltaic (PV) solar cells and tracks crack progression over time. This effort was lead by the Photovoltaic System Evaluation Lab at Sandia National Laboratories. 
+We provide:
 
 - Open‐source cell‐level imaging and electrical datasets  
 - **MultiSolSegment**: crack, busbar, and dark‐area segmentation in EL images  
 - **Variational Autoencoder (VAE)**: unsupervised parameterization and clustering  
 - **XGBoost model**: per‐cell power‐loss estimation (ΔPMPP)  
-- **pvspice_lite**: lightweight SPICE tools for I–V curve simulation  
+- **pvspice_lite**: lightweight SPICE tools for I–V curve simulation
 
 Schematic
 ---------
@@ -43,6 +44,7 @@ All datasets, trained model weights, and additional resources are hosted on Dura
 
 Publications
 ------------
+Please cite our papers and the data uploads above.
 
 - **MultiSolSegment**  
   In revision for *Renewable Energies* (Elsevier).  
