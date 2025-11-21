@@ -10,3 +10,5 @@ docs/_build/
 
 # Editable install artifacts
 *.egg-info/
+
+.venv/
