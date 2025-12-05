@@ -3,7 +3,7 @@ import torch
 
 
 def channeled_inference_and_show(
-    data_loader, device, model, category_mapping, idx, threshold=0.5
+    data_loader, device, model, category_mapping, idx, threshold=0.5, custom_title="Model Prediction"
 ):
     """Run inference on a single dataset element and visualize predictions per class.
 
@@ -62,7 +62,7 @@ def channeled_inference_and_show(
         axs[2, j].set_title(f"Pred: {class_names[j]}")
         axs[2, j].axis("off")
 
-    fig.suptitle("Model Prediction", fontsize=16)
+    fig.suptitle(custom_title, fontsize=16)
 
     plt.tight_layout()
     plt.show()

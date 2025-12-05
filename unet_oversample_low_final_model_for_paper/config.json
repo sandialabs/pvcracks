@@ -1,0 +1,92 @@
+{
+    "settings": {
+        "dataset_tags": {
+            "train": "train",
+            "val": "val"
+        },
+        "batch_size": {
+            "train": 12,
+            "val": 6
+        },
+        "data_workers": {
+            "train": 1,
+            "val": 1
+        },
+        "allow_corrupted_samples": {
+            "train": 0,
+            "val": 0
+        },
+        "special_classes": {
+            "background": "bg",
+            "neutral": "neutral"
+        },
+        "input_size": {
+            "width": 256,
+            "height": 256
+        },
+        "epochs": 10,
+        "val_every": 0.5,
+        "lr": 0.001,
+        "momentum": 0.9,
+        "lr_decreasing": {
+            "patience": 1000,
+            "lr_divisor": 5
+        },
+        "loss_weights": {
+            "bce": 1.0,
+            "dice": 1.0
+        },
+        "weights_init_type": "transfer_learning",
+        "validate_with_model_eval": true,
+        "gpu_devices": [
+            0,
+            1,
+            2,
+            3
+        ]
+    },
+    "out_classes": [
+        {
+            "title": "bg",
+            "shape": "bitmap",
+            "color": "#230F8A",
+            "geometry_config": {},
+            "hotkey": ""
+        },
+        {
+            "title": "busbar",
+            "shape": "bitmap",
+            "color": "#8A640F",
+            "geometry_config": {},
+            "hotkey": ""
+        },
+        {
+            "title": "crack",
+            "shape": "bitmap",
+            "color": "#8A0F59",
+            "geometry_config": {},
+            "hotkey": ""
+        },
+        {
+            "title": "cross",
+            "shape": "bitmap",
+            "color": "#0F8A77",
+            "geometry_config": {},
+            "hotkey": ""
+        },
+        {
+            "title": "dark",
+            "shape": "bitmap",
+            "color": "#448A0F",
+            "geometry_config": {},
+            "hotkey": ""
+        }
+    ],
+    "class_title_to_idx": {
+        "bg": 0,
+        "busbar": 1,
+        "crack": 2,
+        "cross": 3,
+        "dark": 4
+    }
+}
