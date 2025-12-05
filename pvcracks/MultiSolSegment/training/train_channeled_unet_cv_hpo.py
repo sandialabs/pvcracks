@@ -324,7 +324,19 @@ best_configs = []
 
 if ray.is_initialized():
     ray.shutdown()
-ray.init(ignore_reinit_error=True)
+
+# Initialize Ray
+# If running on Slurm cluster with existing Ray instance (e.g. multi-node), use 'auto'
+# Otherwise (single node), it will start a local instance using all available resources.
+try:
+    ray.init(address="auto", ignore_reinit_error=True)
+    print("Connected to existing Ray cluster.")
+except Exception:
+    ray.init(ignore_reinit_error=True)
+    print("Started new local Ray instance.")
+
+print(f"Ray Resources: {ray.available_resources()}")
+
 
 print(f"Starting {NUM_OUTER_FOLDS}-Fold Nested CV on Training Dataset...")
 
