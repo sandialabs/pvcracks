@@ -1,10 +1,8 @@
 """
-Moves files from multiple datasets into a single combined dataset directory.
+We worked on individual datasets at first, and then had to combine them. This moves files from multiple datasets into a single combined dataset directory.
 
 Note: if you download from the DuraMAT DataHub, you will not need this.
 """
-
-# copy files in python
 
 import os
 import shutil
@@ -21,8 +19,7 @@ combined = "/Users/ojas/Desktop/saj/SANDIA/pvcracks_data/Channeled_Combined_CWRU
 
 additives = ["img/original/", "ann_json/"]
 # note: because the "fresh" datasets were saved in an old file strucutre (ann_json instead of ann/json),
-# once this is run we have to manually move over the files to the new structure (ann/json)
-# in the combined folder
+# once this is run we have to manually move over the files to the new structure (ann/json) in the combined folder
 
 # Copy the files from the original datasets to the combined dataset directory
 for path in paths:
