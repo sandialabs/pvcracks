@@ -26,7 +26,7 @@ Note: this is for development, if you are downloading from Supervisely. **If you
    3. Everything also gets saved in `all`. The prefixes distinguish the files when they are put in `all`.
    4. Finally, the images and masks are taken from their respective `all` folders and split into training and validation sets, in `/train` and `/val`
 
-5. Finally, you must run `/utils/dataset_operations/remove_empty_channels.ipynb` to remove an additional layer created during the mask creation process.
+<!-- 5. Finally, you must run `/utils/dataset_operations/remove_empty_channels.ipynb` to remove an additional layer created during the mask creation process. -->
 
 6. The final `tree -d` directory structure should look like this:
 

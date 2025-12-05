@@ -126,7 +126,7 @@ class SolarDataset(VisionDataset):
                 )
             )
         image = Image.open(self.image_list[index])
-        mask = np.load(self.mask_list[index])
+        mask = np.load(self.mask_list[index], allow_pickle=True)
 
         return image, mask
 
