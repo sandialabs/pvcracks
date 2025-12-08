@@ -3,7 +3,14 @@ import torch
 
 
 def channeled_inference_and_show(
-    data_loader, device, model, category_mapping, idx, threshold=0.5, custom_title="Model Prediction"
+    data_loader,
+    device,
+    model,
+    category_mapping,
+    idx,
+    threshold=0.5,
+    custom_title="Model Prediction",
+    save_path=None,
 ):
     """Run inference on a single dataset element and visualize predictions per class.
 
@@ -41,7 +48,9 @@ def channeled_inference_and_show(
     n_classes = len(category_mapping)
     class_names = [f"({k}) {v}" for k, v in category_mapping.items()]
 
-    fig, axs = plt.subplots(3, n_classes, figsize=(4 * n_classes, 12))
+    fig, axs = plt.subplots(
+        3, n_classes, figsize=(4 * n_classes, 12)
+    )
 
     # Row 0: Display raw image in first subplot; hide other subplots in this row.
     axs[0, 0].imshow(raw_img.convert("L"), cmap="viridis")
@@ -62,7 +71,11 @@ def channeled_inference_and_show(
         axs[2, j].set_title(f"Pred: {class_names[j]}")
         axs[2, j].axis("off")
 
-    fig.suptitle(custom_title, fontsize=16)
+    fig.suptitle(custom_title, fontsize=28, y=0.98)
 
-    plt.tight_layout()
+    plt.tight_layout(rect=[0, 0, 1, 0.94])
+    
+    if save_path is not None:
+        plt.savefig(save_path, bbox_inches="tight")
     plt.show()
+

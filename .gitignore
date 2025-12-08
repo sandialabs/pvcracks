@@ -18,3 +18,5 @@ docs/_build/
 labeled_image_data/
 
 *.DS_Store
+
+*.pickle

@@ -8,6 +8,7 @@ Note: this is for development, if you are downloading from Supervisely. **If you
    1. Download in the Supervisely format, select "json annotations + images", and don't select "fix image extension..". 
    2. Leave advanced settings as default.
    3. Place the image files in `/img/orignal/`. Place `.json` files in `/ann/json/`.
+      1. Use `utils/combine_datasets_v2.py` to automate this
 
 3. Convert `.json` mask to a `.npy` mask using `get_channeled_masks.ipynb`
    1. This notebook takes annotations in the form of bitmaps, and transforms them into an array of 2D arrays (ie, a 3D array). Each 2D array contains binary per-pixel activation maps for one of the 4 classes.
@@ -26,7 +27,7 @@ Note: this is for development, if you are downloading from Supervisely. **If you
    3. Everything also gets saved in `all`. The prefixes distinguish the files when they are put in `all`.
    4. Images and masks are split into training and validation sets, in `/train` and `/val`, and augmentation is applied only after this step. This ensures the test set is not contaminated.
 
-6. The final `tree -d` directory structure should look like this:
+5. The final `tree -d` directory structure should look like this:
 
 ```
 .
