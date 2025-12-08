@@ -1,5 +1,6 @@
 import os
-from typing import Union
+import re
+from typing import overload, Literal
 
 import torch
 from typing_extensions import OrderedDict
@@ -8,21 +9,28 @@ from . import img_functions
 from .unet_model import construct_unet
 
 
+@overload
+def load_dataset(root, full_set: Literal[True]) -> img_functions.SolarDataset: ...
+
+
+@overload
 def load_dataset(
-    root, full_set=False
-) -> Union[
-    img_functions.SolarDataset,
-    tuple[img_functions.SolarDataset, img_functions.SolarDataset],
-]:
+    root, full_set: Literal[False] = False
+) -> tuple[img_functions.SolarDataset, img_functions.SolarDataset]: ...
+
+
+def load_dataset(root, full_set=False):
     """Instantiate dataset objects with a common preprocessing pipeline.
 
     Args:
         root (str or Path): Root directory containing image and annotation folders.
         full_set (bool, optional): When `True`, return the combined dataset; otherwise
-            return the train/validation split.
+            return the train/validation split. Defaults to False.
 
     Returns:
-        SolarDataset or tuple[SolarDataset, SolarDataset]: Dataset(s) configured for training.
+        SolarDataset | tuple[SolarDataset, SolarDataset]: When `full_set=True`,
+            returns a single SolarDataset with all data. When `full_set=False`,
+            returns a tuple of (train_dataset, val_dataset).
     """
     transformers = img_functions.Compose(
         [
@@ -98,13 +106,10 @@ def get_save_dir(base_dir, checkpoint_name) -> str:
     checkpoint_dir = base_dir + "/checkpoints/"
     folders = [folder for folder in os.listdir(checkpoint_dir)]
 
-    max_number = 0
-    for folder in folders:
-        number = int(folder[-1])
-        if number > max_number:
-            max_number = number
+    numbers = [int(re.search(r"(\d+)$", folder).group(1)) for folder in folders]
+    next_number = max(numbers) + 1
 
-    new_folder_name = f"{checkpoint_name}{max_number + 1}"
+    new_folder_name = f"{checkpoint_name}{next_number}"
     new_folder_path = os.path.join(checkpoint_dir, new_folder_name)
 
     os.makedirs(new_folder_path, exist_ok=True)

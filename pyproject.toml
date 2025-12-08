@@ -81,6 +81,7 @@ dependencies = [
     "pytz==2025.2",
     "pyyaml==6.0.2",
     "pyzmq==26.4.0",
+    "ray[data,serve,train,tune]>=2.52.1",
     "rdkit==2025.3.1",
     "referencing==0.36.2",
     "requests==2.32.3",
