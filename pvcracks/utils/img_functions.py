@@ -65,7 +65,7 @@ class SolarDataset(VisionDataset):
         """Return the total number of samples available."""
         return len(self.image_list)
 
-    def __get_img_path__(self, index):
+    def get_img_path(self, index):
         """Return the full path to the image file at `index`.
 
         Args:
