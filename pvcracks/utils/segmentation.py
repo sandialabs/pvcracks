@@ -45,6 +45,7 @@ def segment(
 
     # Preprocess input
     img = transforms.ToTensor()(image).to(device)
+    img = F.normalize(img, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
     # Inference
     logits = model(img.unsqueeze(0)).detach().cpu()      # [1, n_classes, H, W]
