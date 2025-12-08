@@ -12,3 +12,10 @@ docs/_build/
 *.egg-info/
 
 .venv/
+
+*.pt
+
+labeled_image_data/
+
+*.DS_Store
+
