@@ -25,6 +25,7 @@ import os
 import random
 
 import numpy as np
+from torch.amp import GradScaler, autocast
 
 # Ray Tune Imports
 import ray
@@ -48,17 +49,18 @@ MASTER_CONFIG = {
     # Ray Tune Search Space (User can define Grid Search here)
     "ray_search_space": {
         "lr": tune.grid_search([0.0001, 0.0005, 0.001, 0.005, 0.01]),
-        "batch_size": 32,
+        "batch_size": 8,
     },
-    "ray_num_samples": 2,  # Number of trials per HPO run (Increase for better search)
-    "hpo_epochs": 20,  # Epochs for Inner Loop Model Training (Ray Tune)
-    "refinement_epochs": 20,  # Epochs for Outer Loop Fold Evaluation (Train with Best HPs)
-    "final_model_epochs": 20,  # Epochs for the Final Production Model (Full Train Data)
+    "ray_num_samples": 3,  # Number of trials per HPO run (Increase for better search)
+    "hpo_epochs": 40,  # Epochs for Inner Loop Model Training (Ray Tune)
+    "refinement_epochs": 40,  # Epochs for Outer Loop Fold Evaluation (Train with Best HPs)
+    "final_model_epochs": 40,  # Epochs for the Final Production Model (Full Train Data)
     "experiment_name": "Nested_CV_Configurable",
     "hpo_metric": "loss",  # Metric to optimize in Ray Tune. Options: 'iou', 'dice', 'accuracy', 'precision', 'recall', 'loss'
     "hpo_mode": "min",  # 'max' (for iou/dice/acc) or 'min' (for loss)
     "patience": 5,  # Early Stopping Patience (Epochs)
     "resources_per_trial": {"gpu": 1 if torch.cuda.is_available() else 0},
+    # "max_concurrent_trials": 1,
 }
 
 
@@ -75,7 +77,7 @@ set_seed(MASTER_CONFIG["seed"])
 
 # %%
 # --- Setup Directories ---
-ROOT_DIR = "/Users/ojas/Desktop/saj/SANDIA/pvcracks_data/Channeled_Combined_CWRU_LBNL_ASU_No_Empty_RNE_Revise/"
+ROOT_DIR = "/mnt/home/osanghi/pvcracks_data_fixed/"
 CATEGORY_MAPPING = {0: "dark", 1: "busbar", 2: "crack", 3: "non-cell"}
 
 SAVE_DIR_ROOT = train_functions.get_save_dir(
@@ -110,6 +112,7 @@ train_dataset, val_dataset_holdout = train_functions.load_dataset(
 print(f"Training Data (For CV & HPO): {len(train_dataset)} samples")
 print(f"Holdout Data (For Final Test): {len(val_dataset_holdout)} samples")
 
+
 # CV will happen ONLY on train_dataset indices
 
 # %% [markdown]
@@ -131,11 +134,9 @@ class EarlyStopping:
         self.delta = delta
 
         if mode == "max":
-            self.val_score_fn = lambda x: x
-            self.best_score = -np.Inf
+            self.best_score = -np.inf
         else:
-            self.val_score_fn = lambda x: -x
-            self.best_score = np.Inf
+            self.best_score = np.inf
 
     def __call__(self, score, model, save_path=None):
         # Check improvement
@@ -143,6 +144,10 @@ class EarlyStopping:
             improved = score > (self.best_score + self.delta)
         else:
             improved = score < (self.best_score - self.delta)
+
+        print(
+            f"Score: {score:.4f}, Best Score: {self.best_score:.4f}, Improved: {improved}"
+        )
 
         if improved:
             self.best_score = score
@@ -188,17 +193,28 @@ def get_metrics_dict(pred, target, epsilon=1e-6):
     }
 
 
+scaler = GradScaler("cuda")
+
+
 def train_epoch(model, loader, optimizer, criterion, device):
     model.train()
     running_loss = 0.0
     for data, target in loader:
         data, target = data.to(device), target.to(device)
         target = target.float()
+
         optimizer.zero_grad()
-        output = model(data)
-        loss = criterion(output, target)
-        loss.backward()
-        optimizer.step()
+
+        # forward in mixed precision
+        with autocast(device_type="cuda"):
+            output = model(data)
+            loss = criterion(output, target)
+
+        # update the scaler
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)
+        scaler.update()
+
         running_loss += loss.item()
     return running_loss / len(loader)
 
@@ -214,11 +230,16 @@ def validate_epoch(model, loader, criterion, device, category_mapping):
     metrics_accum["Aggregate"] = {k: [] for k in metric_keys}
 
     with torch.no_grad():
+        torch.cuda.empty_cache()
         for data, target in loader:
             data, target = data.to(device), target.to(device)
             target = target.float()
-            output = model(data)
-            loss = criterion(output, target)
+
+            # forward in mixed precision
+            with autocast(device_type="cuda"):
+                output = model(data)
+                loss = criterion(output, target)
+
             running_loss += loss.item()
 
             # Metrics calculation
@@ -294,8 +315,9 @@ def train_ray(config, train_dataset_ref=None, train_indices=None):
         )
 
         # Report to Ray
-        ray.train.report(
+        ray.tune.report(
             {
+                "train_loss": train_loss,
                 "loss": val_loss,
                 "iou": val_metrics["Aggregate"]["iou"],
                 "dice": val_metrics["Aggregate"]["dice"],
@@ -309,6 +331,10 @@ def train_ray(config, train_dataset_ref=None, train_indices=None):
         early_stopping(metric_val, model)
         if early_stopping.early_stop:
             break
+
+    del model, optimizer, train_dataset_ref
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
 
 # %% [markdown]
@@ -329,10 +355,19 @@ if ray.is_initialized():
 # If running on Slurm cluster with existing Ray instance (e.g. multi-node), use 'auto'
 # Otherwise (single node), it will start a local instance using all available resources.
 try:
-    ray.init(address="auto", ignore_reinit_error=True)
+    ray.init(
+        address="auto",
+        ignore_reinit_error=True,
+        runtime_env={"working_dir": None},
+        # _temp_dir="/mnt/home/osanghi/pvcracks/logs/ray_temp/",
+    )
     print("Connected to existing Ray cluster.")
 except Exception:
-    ray.init(ignore_reinit_error=True)
+    ray.init(
+        ignore_reinit_error=True,
+        runtime_env={"working_dir": None},
+        # _temp_dir="/mnt/home/osanghi/pvcracks/logs/ray_temp/",
+    )
     print("Started new local Ray instance.")
 
 print(f"Ray Resources: {ray.available_resources()}")
@@ -340,24 +375,31 @@ print(f"Ray Resources: {ray.available_resources()}")
 
 print(f"Starting {NUM_OUTER_FOLDS}-Fold Nested CV on Training Dataset...")
 
+my_train_dataset_ref = ray.put(train_dataset)
+
 for fold_idx, (train_idx, val_idx) in enumerate(kf.split(range(len(train_dataset)))):
     print(f"\n=== Outer Fold {fold_idx + 1}/{NUM_OUTER_FOLDS} ===")
 
     # --- Leakage Check ---
     assert len(set(train_idx).intersection(set(val_idx))) == 0
 
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
     # --- Step 1: HPO (Inner Loop) ---
     print("Running HPO...")
     analysis = tune.run(
         tune.with_parameters(
-            train_ray, train_dataset_ref=train_dataset, train_indices=train_idx.tolist()
+            train_ray,
+            train_dataset_ref=my_train_dataset_ref,
+            train_indices=train_idx.tolist(),
         ),
         config=MASTER_CONFIG["ray_search_space"],
         metric=MASTER_CONFIG["hpo_metric"],
         mode=MASTER_CONFIG["hpo_mode"],
         num_samples=MASTER_CONFIG["ray_num_samples"],
         scheduler=ASHAScheduler(
-            metric=MASTER_CONFIG["hpo_metric"], mode=MASTER_CONFIG["hpo_mode"]
+            # metric=MASTER_CONFIG["hpo_metric"], mode=MASTER_CONFIG["hpo_mode"]
         ),
         resources_per_trial=MASTER_CONFIG["resources_per_trial"],
         verbose=1,
@@ -368,6 +410,8 @@ for fold_idx, (train_idx, val_idx) in enumerate(kf.split(range(len(train_dataset
     )
     best_configs.append(best_config)
     print(f"Best Config: {best_config}")
+
+    del analysis
 
     # --- Step 2: Fold Evaluation ---
     print("Retraining for Fold Evaluation with Early Stopping...")
@@ -393,20 +437,25 @@ for fold_idx, (train_idx, val_idx) in enumerate(kf.split(range(len(train_dataset
     refine_epochs = MASTER_CONFIG["refinement_epochs"]
     for epoch in range(refine_epochs):
         _ = train_epoch(model, train_loader, optimizer, criterion, device)
-        _, fold_metrics_epoch = validate_epoch(
+        fold_val, fold_metrics_epoch = validate_epoch(
             model, fold_val_loader, criterion, device, CATEGORY_MAPPING
         )
+
+        print("FOLD VAL: ", fold_val)
 
         metric_val = (
             fold_metrics_epoch["Aggregate"][MASTER_CONFIG["hpo_metric"]]
             if MASTER_CONFIG["hpo_metric"] != "loss"
-            else _
+            # else _
+            else fold_val
         )
 
         early_stopping(metric_val, model, save_path=fold_model_path)
         if early_stopping.early_stop:
             print("Early stopping triggered.")
             break
+
+    print("finished fold training")
 
     # Load best model for Final Evaluation of this fold
     model.load_state_dict(torch.load(fold_model_path))
@@ -418,6 +467,10 @@ for fold_idx, (train_idx, val_idx) in enumerate(kf.split(range(len(train_dataset
         {"fold": fold_idx, "best_config": best_config, "metrics": fold_metrics}
     )
     print(f"Fold {fold_idx + 1} Val IoU: {fold_metrics['Aggregate']['iou']:.4f}")
+
+    del model
+    torch.cuda.empty_cache()
+
 
 # Save CV Results
 with open(os.path.join(SAVE_DIR_ROOT, "nested_cv_results.json"), "w") as f:
@@ -438,16 +491,29 @@ with open(os.path.join(SAVE_DIR_ROOT, "nested_cv_results.json"), "w") as f:
 # ## 3. CV Summary
 
 # %%
+print("\n\n----------------- FINAL EVALS-----------------")
+
 ious = [res["metrics"]["Aggregate"]["iou"] for res in outer_results]
 print(f"Mean CV IoU: {np.mean(ious):.4f} +/- {np.std(ious):.4f}")
+
+print(best_configs)
+[cfg["lr"] for cfg in best_configs]
+
+print(outer_results)
+print([res for res in outer_results])
+print([res["metrics"]["Aggregate"] for res in outer_results])
 
 # %% [markdown]
 # ## 4. Final Model Training & Evaluation
 # Using averaged best HPs, train on **Full Train Dataset**, then test on **Strict Holdout (Val Dataset)**.
 
 # %%
-final_lr = float(np.mean([cfg["lr"] for cfg in best_configs]))
-final_bs = int(np.median([cfg["batch_size"] for cfg in best_configs]))
+from collections import Counter
+
+lr_counts = Counter(cfg["lr"] for cfg in best_configs)
+final_lr = lr_counts.most_common(1)[0][0]
+bs_counts = Counter(cfg["batch_size"] for cfg in best_configs)
+final_bs = bs_counts.most_common(1)[0][0]
 
 print(
     f"\nFINAL TRAINING on {len(train_dataset)} samples. LR={final_lr:.1e}, BS={final_bs}"
@@ -455,7 +521,7 @@ print(
 print(f"Training for {MASTER_CONFIG['final_model_epochs']} epochs with Early Stopping.")
 
 full_train_loader = DataLoader(train_dataset, batch_size=final_bs, shuffle=True)
-holdout_loader = DataLoader(val_dataset_holdout, batch_size=1, shuffle=False)
+holdout_loader = DataLoader(val_dataset_holdout, batch_size=final_bs, shuffle=False)
 
 device, model = train_functions.load_device_and_model(CATEGORY_MAPPING)
 criterion = torch.nn.BCEWithLogitsLoss()
@@ -481,10 +547,14 @@ for epoch in tqdm(range(final_epochs), desc="Final Model"):
     train_epoch(model, full_train_loader, optimizer, criterion, device)
 
     # Validate on Holdout to check for "Best So Far"
-    _, holdout_metrics_epoch = validate_epoch(
+    holdout_val, holdout_metrics_epoch = validate_epoch(
         model, holdout_loader, criterion, device, CATEGORY_MAPPING
     )
-    metric_val = holdout_metrics_epoch["Aggregate"][MASTER_CONFIG["hpo_metric"]]
+    metric_val = (
+        holdout_metrics_epoch["Aggregate"][MASTER_CONFIG["hpo_metric"]]
+        if MASTER_CONFIG["hpo_metric"] != "loss"
+        else holdout_val
+    )
 
     early_stopping(metric_val, model, save_path=final_model_path)
     if early_stopping.early_stop:
@@ -503,6 +573,8 @@ _, holdout_metrics = validate_epoch(
 
 print(f"FINAL HOLDOUT IoU: {holdout_metrics['Aggregate']['iou']:.4f}")
 print(f"FINAL HOLDOUT Acc: {holdout_metrics['Aggregate']['accuracy']:.4f}")
+print("Final Model: ", holdout_metrics)
+print("Final Model: ", holdout_metrics["Aggregate"])
 
 # Save Metrics
 with open(os.path.join(SAVE_DIR_ROOT, "final_holdout_metrics.json"), "w") as f:
