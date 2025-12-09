@@ -11,6 +11,12 @@ def channeled_inference_and_show(
     threshold=0.5,
     custom_title="Model Prediction",
     save_path=None,
+    rows=3,
+    model_two=None,
+    label_prefix_one="",
+    label_prefix_two="",
+    secondary_mapping=None,
+    secondary_mapping_index=1,
 ):
     """Run inference on a single dataset element and visualize predictions per class.
 
@@ -47,10 +53,13 @@ def channeled_inference_and_show(
     #   Row 2: Predicted masks for each class
     n_classes = len(category_mapping)
     class_names = [f"({k}) {v}" for k, v in category_mapping.items()]
-
-    fig, axs = plt.subplots(
-        3, n_classes, figsize=(4 * n_classes, 12)
+    class_names_secondary = (
+        [f"({k}) {v}" for k, v in secondary_mapping.items()]
+        if secondary_mapping
+        else None
     )
+
+    fig, axs = plt.subplots(rows, n_classes, figsize=(4 * n_classes, 4 * rows))
 
     # Row 0: Display raw image in first subplot; hide other subplots in this row.
     axs[0, 0].imshow(raw_img.convert("L"), cmap="viridis")
@@ -68,14 +77,30 @@ def channeled_inference_and_show(
     # Row 2: Predictions for each class (each channel)
     for j in range(n_classes):
         axs[2, j].imshow(pred_mask[j], cmap="viridis")
-        axs[2, j].set_title(f"Pred: {class_names[j]}")
+        if secondary_mapping_index == 2 and secondary_mapping:
+            axs[2, j].set_title(f"{label_prefix_one}Pred: {class_names_secondary[j]}")
+        else:
+            axs[2, j].set_title(f"{label_prefix_one}Pred: {class_names[j]}")
         axs[2, j].axis("off")
+
+    if rows == 4 and model_two is not None:
+        logits_two = model_two(img.unsqueeze(0)).detach().cpu()
+        probs_two = torch.sigmoid(logits_two)
+        pred_mask_two = (probs_two > threshold).float().squeeze(0).numpy()
+
+        # Row 3: Predictions from the second model for each class (each channel)
+        for j in range(n_classes):
+            axs[3, j].imshow(pred_mask_two[j], cmap="viridis")
+            if secondary_mapping_index == 3 and secondary_mapping:
+                axs[3, j].set_title(f"{label_prefix_two}Pred: {class_names_secondary[j]}")
+            else:
+                axs[3, j].set_title(f"{label_prefix_two}Pred: {class_names[j]}")
+            axs[3, j].axis("off")
 
     fig.suptitle(custom_title, fontsize=28, y=0.98)
 
     plt.tight_layout(rect=[0, 0, 1, 0.94])
-    
+
     if save_path is not None:
         plt.savefig(save_path, bbox_inches="tight")
     plt.show()
-
