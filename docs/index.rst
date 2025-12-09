@@ -42,26 +42,31 @@ All datasets, trained model weights, and additional resources are hosted on Dura
 - VAE model weights  
   (DOI: `10.21948/2997860 <https://doi.org/10.21948/2997860>`__)
 
-Publications
-------------
-Please cite our papers and the data uploads above.
+## Publications
 
 - **MultiSolSegment**  
-  In revision for *Renewable Energies* (Elsevier).  
+  In revision for *Solar Energy* (Elsevier). Preprint [10.2139/ssrn.5506469](https://dx.doi.org/10.2139/ssrn.5506469).
 
 - **Variational Autoencoder (VAE)**  
-  EUPVSEC 2024 conference  
-  DOI: `10.4229/EUPVSEC2024/3BO.15.6 <https://doi.org/10.4229/EUPVSEC2024/3BO.15.6>`__
+  EUPVSEC 2024 conference proceeding  
+  DOI: [10.4229/EUPVSEC2024/3BO.15.6](https://doi.org/10.4229/EUPVSEC2024/3BO.15.6)
 
-- **Power‐Loss Model (XGBoost)**  
-  PVSC 2025 conference  
-  DOI: `10.1109/PVSC59419.2025.11132966 <https://doi.org/10.1109/PVSC59419.2025.11132966>`__
+- **Power-Loss Model (XGBoost)**  
+  2025 IEEE 53rd Photovoltaic Specialists Conference (PVSC) proceeding  
+  DOI: [10.1109/PVSC59419.2025.11132966](https://doi.org/10.1109/PVSC59419.2025.11132966)
 
-Updates
--------
+## Updates
 
-- Sep 30 2025: Webinar on Nov 10. Register at  
-  https://www.duramat.org/news-and-events/webinars  
+- Dec. 9th 2025: Duramat webinar is uploaded here:  
+  [www.duramat.org/news-and-events/webinars](https://www.duramat.org/news-and-events/webinars)
+  [Direct Link to youtube](https://www.youtube.com/watch?v=4QWsLkpUDd4)
+
+
+## Acknowledgments
+
+Funding was provided as part of the Durable Modules Consortium (DuraMAT), an Energy Materials Network Consortium funded by the U.S. Department of Energy, Office of Energy Efficiency and Renewable Energy, Solar Energy Technologies Office under agreement number 32509. The views expressed in this article do not necessarily represent the views of the DOE or the U.S. Government. The U.S. Government retains—and the publisher, by accepting the article for publication, acknowledges—that it retains a nonexclusive, paid-up, irrevocable, worldwide license to publish or reproduce the published form of this work, or to allow others to do so, for U.S. Government purposes.
+
+Sandia National Laboratories is a multimission laboratory managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a wholly owned subsidiary of Honeywell International Inc., for the U.S. Department of Energy’s National Nuclear Security Administration under contract DE-NA0003525. 
 
 Installation
 ------------
