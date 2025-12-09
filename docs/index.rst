@@ -45,21 +45,22 @@ All datasets, trained model weights, and additional resources are hosted on Dura
 ## Publications
 
 - **MultiSolSegment**  
-  In revision for *Solar Energy* (Elsevier). Preprint [10.2139/ssrn.5506469](https://dx.doi.org/10.2139/ssrn.5506469).
+  In revision for *Solar Energy* (Elsevier). Preprint  
+  (`10.2139/ssrn.5506469 <https://dx.doi.org/10.2139/ssrn.5506469>`__)
 
 - **Variational Autoencoder (VAE)**  
   EUPVSEC 2024 conference proceeding  
-  DOI: [10.4229/EUPVSEC2024/3BO.15.6](https://doi.org/10.4229/EUPVSEC2024/3BO.15.6)
+  (`10.4229/EUPVSEC2024/3BO.15.6 <https://doi.org/10.4229/EUPVSEC2024/3BO.15.6>`__)
 
 - **Power-Loss Model (XGBoost)**  
   2025 IEEE 53rd Photovoltaic Specialists Conference (PVSC) proceeding  
-  DOI: [10.1109/PVSC59419.2025.11132966](https://doi.org/10.1109/PVSC59419.2025.11132966)
+  (`10.1109/PVSC59419.2025.11132966 <https://doi.org/10.1109/PVSC59419.2025.11132966>`__)
 
 ## Updates
 
-- Dec. 9th 2025: Duramat webinar is uploaded here:  
-  [www.duramat.org/news-and-events/webinars](https://www.duramat.org/news-and-events/webinars)
-  [Direct Link to youtube](https://www.youtube.com/watch?v=4QWsLkpUDd4)
+- Dec. 9 2025: DuraMAT webinar is uploaded here:  
+  `www.duramat.org/news-and-events/webinars <https://www.duramat.org/news-and-events/webinars>`__  
+  `Direct Link to YouTube <https://www.youtube.com/watch?v=4QWsLkpUDd4>`__
 
 
 ## Acknowledgments
