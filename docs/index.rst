@@ -42,7 +42,8 @@ All datasets, trained model weights, and additional resources are hosted on Dura
 - VAE model weights  
   (DOI: `10.21948/2997860 <https://doi.org/10.21948/2997860>`__)
 
-## Publications
+Publications
+-------------
 
 - **MultiSolSegment**  
   In revision for *Solar Energy* (Elsevier). Preprint  
@@ -56,14 +57,16 @@ All datasets, trained model weights, and additional resources are hosted on Dura
   2025 IEEE 53rd Photovoltaic Specialists Conference (PVSC) proceeding  
   (`10.1109/PVSC59419.2025.11132966 <https://doi.org/10.1109/PVSC59419.2025.11132966>`__)
 
-## Updates
+Updates
+-------------
 
 - Dec. 9 2025: DuraMAT webinar is uploaded here:  
   `www.duramat.org/news-and-events/webinars <https://www.duramat.org/news-and-events/webinars>`__  
   `Direct Link to YouTube <https://www.youtube.com/watch?v=4QWsLkpUDd4>`__
 
 
-## Acknowledgments
+Acknowledgments
+-------------
 
 Funding was provided as part of the Durable Modules Consortium (DuraMAT), an Energy Materials Network Consortium funded by the U.S. Department of Energy, Office of Energy Efficiency and Renewable Energy, Solar Energy Technologies Office under agreement number 32509. The views expressed in this article do not necessarily represent the views of the DOE or the U.S. Government. The U.S. Government retains—and the publisher, by accepting the article for publication, acknowledges—that it retains a nonexclusive, paid-up, irrevocable, worldwide license to publish or reproduce the published form of this work, or to allow others to do so, for U.S. Government purposes.
 
