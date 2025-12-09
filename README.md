@@ -55,7 +55,7 @@ All datasets, trained model weights, and additional resources are hosted on Dura
 ## Publications
 
 - **MultiSolSegment**  
-  In revision for *Renewable Energies* (Elsevier). Link to follow.
+  In revision for *Solar Energy* (Elsevier). Preprint [10.2139/ssrn.5506469](https://dx.doi.org/10.2139/ssrn.5506469).
 
 - **Variational Autoencoder (VAE)**  
   EUPVSEC 2024 conference proceeding  
@@ -67,8 +67,9 @@ All datasets, trained model weights, and additional resources are hosted on Dura
 
 ## Updates
 
-- Sep. 30th 2025: Please attend our webinar on Nov. 10th. Sign up here:  
+- Dec. 9th 2025: Duramat webinar is uploaded here:  
   [www.duramat.org/news-and-events/webinars](https://www.duramat.org/news-and-events/webinars)
+  [Direct Link to youtube](https://www.youtube.com/watch?v=4QWsLkpUDd4)
 
 ## Installation
 
@@ -86,3 +87,12 @@ pip install -r requirements.txt
 
 # 3. Install pvcracks in editable mode
 pip install -e .    # enables intra-project imports
+
+```
+
+## Acknowledgments
+
+Funding was provided as part of the Durable Modules Consortium (DuraMAT), an Energy Materials Network Consortium funded by the U.S. Department of Energy, Office of Energy Efficiency and Renewable Energy, Solar Energy Technologies Office under agreement number 32509. The views expressed in this article do not necessarily represent the views of the DOE or the U.S. Government. The U.S. Government retains—and the publisher, by accepting the article for publication, acknowledges—that it retains a nonexclusive, paid-up, irrevocable, worldwide license to publish or reproduce the published form of this work, or to allow others to do so, for U.S. Government purposes.
+
+Sandia National Laboratories is a multimission laboratory managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a wholly owned subsidiary of Honeywell International Inc., for the U.S. Department of Energy’s National Nuclear Security Administration under contract DE-NA0003525.
+
