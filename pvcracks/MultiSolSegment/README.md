@@ -62,6 +62,7 @@ To remove `.DS_Store` files on Mac, run this in `/pvcracks` and `/pvcracks_data`
 find ./ -type f -name ".DS_Store" -exec rm -f {} +
 ```
 
-Note that the presence of a `.DS_Store` file (and thus the necessity to run the above command) is often signified by the following error when running `train_functions.get_save_dir()`:
+The optional training package's checkpoint helper ignores files such as
+`.DS_Store`, so those files no longer affect checkpoint-directory creation.
 
 `ValueError: invalid literal for int() with base 10: 'e'`

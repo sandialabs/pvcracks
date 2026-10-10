@@ -6,14 +6,6 @@ pvcracks.utils package
    :undoc-members:
    :show-inheritance:
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 4
-
-   pvcracks.utils.dataset_operations
-
 Submodules
 ----------
 
@@ -33,10 +25,10 @@ pvcracks.utils.segmentation module
    :undoc-members:
    :show-inheritance:
 
-pvcracks.utils.train\_functions module
---------------------------------------
+pvcracks.utils.model\_io module
+--------------------------------
 
-.. automodule:: pvcracks.utils.train_functions
+.. automodule:: pvcracks.utils.model_io
    :members:
    :undoc-members:
    :show-inheritance:

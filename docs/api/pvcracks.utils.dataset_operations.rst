@@ -1,26 +1,21 @@
-pvcracks.utils.dataset\_operations package
-==========================================
+Dataset preparation utilities
+=============================
 
-.. automodule:: pvcracks.utils.dataset_operations
+The following helper scripts consolidate the labelled image data sets used by
+the MultiSolSegment training workflow.
+
+pvcracks.utils.combine\_datasets\_v2 module
+---------------------------------------------
+
+.. automodule:: pvcracks.utils.combine_datasets_v2
    :members:
    :undoc-members:
    :show-inheritance:
 
-Submodules
-----------
+pvcracks.utils.combine\_datasets\_cwru\_lbnl\_asu module
+-----------------------------------------------------------
 
-pvcracks.utils.dataset\_operations.combine\_datasets\_cwru\_lbnl\_asu module
-----------------------------------------------------------------------------
-
-.. automodule:: pvcracks.utils.dataset_operations.combine_datasets_cwru_lbnl_asu
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pvcracks.utils.dataset\_operations.copy\_train\_val\_to\_all module
--------------------------------------------------------------------
-
-.. automodule:: pvcracks.utils.dataset_operations.copy_train_val_to_all
+.. automodule:: pvcracks.utils.combine_datasets_cwru_lbnl_asu
    :members:
    :undoc-members:
    :show-inheritance:

@@ -1,1088 +1,811 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Mar  7 15:18:35 2024
-Last edit: April 28th 2025
+"""Build, execute, and read transparent photovoltaic ngspice simulations."""
 
-Simulate modules using spice
+from __future__ import annotations
 
-@author: nrjost
-"""
+import os
+import subprocess
+import warnings
+from pathlib import Path
 
-def _batch_ngspice_executable(executable):
-    """Return ngspice's console executable when a Windows install provides it."""
-    from pathlib import Path
-
-    executable = Path(executable)
-    console_executable = executable.with_name("ngspice_con.exe")
-
-    if executable.name.lower() == "ngspice.exe" and console_executable.is_file():
-        return console_executable
-
-    return executable
+import numpy as np
+import pandas as pd
 
 
-def run_ngspice(ngpsice_path, circuit_file, *, capture_output=False, timeout=None):
+def run_ngspice(
+    ngpsice_path: str | os.PathLike[str],
+    circuit_file: str | os.PathLike[str],
+    *,
+    capture_output: bool = False,
+    timeout: float | None = None,
+    log_file: str | os.PathLike[str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    """Run an ngspice batch simulation using an explicit executable path.
+
+    ``ngpsice_path`` is intentionally not discovered from an environment
+    variable, ``PATH``, or platform-specific installation locations. Callers
+    supply the exact executable they intend to run, which makes notebook and
+    HPC executions reproducible across Windows and Linux.
     """
-    Run ngspice using path and netlist/circuit    
-    
-    Parameters
-    ----------
-    ngpsice_path : str
-        path to ngspice, example: 'C:/Spice64/bin/ngspice.exe'
-    circuit_file : str
-        path to netlist, example: 'C:/Spice64/test/solar_circuit.cir'
-
-    capture_output : bool, default False
-        Capture the ngspice console output instead of printing it.
-    timeout : float, optional
-        Maximum run time in seconds.
-
-    Returns
-    -------
-    subprocess.CompletedProcess
-        The completed batch process. The circuit output is still saved to the
-        path given in ``module_to_netlist``.
-    
-    Notes
-    ------
-    To install ngspice follow the instructions here:
-        https://ngspice.sourceforge.io/index.html
-
-    """
-    import os
-    from pathlib import Path
-    import subprocess
-
-    circuit_path = Path(circuit_file).resolve()
-    executable = _batch_ngspice_executable(ngpsice_path)
-    ngspice_command = [str(executable), "-b", str(circuit_path)]
-
-    run_kwargs = {
+    circuit = Path(circuit_file).resolve()
+    executable = Path(ngpsice_path).expanduser().resolve()
+    if not circuit.is_file():
+        raise FileNotFoundError(f"SPICE circuit file does not exist: {circuit}")
+    if not executable.is_file():
+        raise FileNotFoundError(f"ngspice executable does not exist: {executable}")
+    command = [str(executable), "-b"]
+    if log_file is not None:
+        log = Path(log_file).expanduser().resolve()
+        if not log.parent.is_dir():
+            raise FileNotFoundError(f"ngspice log directory does not exist: {log.parent}")
+        command.extend(["-o", str(log)])
+    command.append(str(circuit))
+    kwargs: dict[str, object] = {
         "check": True,
-        "cwd": str(circuit_path.parent),
+        "cwd": str(circuit.parent),
         "text": True,
         "capture_output": capture_output,
         "timeout": timeout,
     }
-
-    # ngspice_con.exe is a batch/console executable. On Windows, prevent it
-    # from creating a visible console window for every simulation.
     if os.name == "nt":
-        run_kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
-
+        kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
     try:
-        return subprocess.run(ngspice_command, **run_kwargs)
-    except subprocess.CalledProcessError as e:
-        details = e.stderr.strip() if e.stderr else str(e)
-        raise RuntimeError(
-            f"ngspice failed for {circuit_path}: {details}"
-        ) from e
-    
-def run_xyce(xyce_path, outputfile, circuit_file):
-    """
-    Run xyce using path and netlist/circuit    
-    
-    Parameters
-    ----------
-    xyce_path : str
-        path to xyce, example: 'C:/Xyce_7.8/bin/Xyce.exe'
-    circuit_file : str
-        path to netlist, example: 'C:/Xyce_7.8/test/solar_circuit.cir'
-
-    Returns
-    -------
-    Nothing the output is saved to the path given in module_to_netlist
-    
-    Notes
-    ------
-    To install xyce follow the instructions here:
-        https://xyce.sandia.gov/
-    """
-    import subprocess
-    xyce_command = [xyce_path, "-r", outputfile, circuit_file]
-    try:
-        subprocess.run(xyce_command)
-    except subprocess.CalledProcessError as e:
-        print(f"Error: {e}")
-        print(f"Check path for Xyce, current: {xyce_path}")
-        print(f"Check path for circuit file, current: {circuit_file}")
+        return subprocess.run(command, **kwargs)
+    except subprocess.CalledProcessError as error:
+        details = error.stderr.strip() if error.stderr else str(error)
+        raise RuntimeError(f"ngspice failed for {circuit}: {details}") from error
 
 
-def plot_solar_module(cell_currents, cells_wide, cells_long, font=18, save=True):
-    """
-    Plot module with cell currents as color bar
-    
-    Parameters
-    ----------
-    cell_currents : array
-        currents in A for each solar cell in the module
-    cells_wide : int
-        number of cells along short edge of module
-    cells_long : int
-        number of cells along long edge of module
-    font : int
-        fontsize for plot
-    save : bool
-        save the plot to the current path
+def run_xyce(
+    xyce_path: str | os.PathLike[str],
+    outputfile: str | os.PathLike[str],
+    circuit_file: str | os.PathLike[str],
+    *,
+    timeout: float | None = None,
+) -> subprocess.CompletedProcess[str]:
+    """Run a Xyce batch simulation and return the completed process."""
+    circuit = Path(circuit_file).resolve()
+    executable = Path(xyce_path).expanduser().resolve()
+    output = Path(outputfile).expanduser().resolve()
+    if not circuit.is_file():
+        raise FileNotFoundError(f"SPICE circuit file does not exist: {circuit}")
+    if not executable.is_file():
+        raise FileNotFoundError(f"Xyce executable does not exist: {executable}")
+    if not output.parent.is_dir():
+        raise FileNotFoundError(f"Xyce output directory does not exist: {output.parent}")
+    return subprocess.run(
+        [str(executable), "-r", str(output), str(circuit)],
+        check=True,
+        cwd=str(circuit.parent),
+        text=True,
+        capture_output=True,
+        timeout=timeout,
+    )
 
-    Returns
-    -------
-    Does not return anything but plots the cell current map and saves the plot to current path
 
-    """
-    import numpy as np
+def plot_solar_module(
+    cell_currents: np.ndarray | list[float],
+    cells_wide: int,
+    cells_long: int,
+    font: int = 18,
+    save: bool | str | os.PathLike[str] = False,
+):
+    """Plot a cell-current map and return its Matplotlib axes."""
     from matplotlib import pyplot as plt
-    
-    # Reshape the list of cell currents into a 2D array
-    cell_currents_array = np.array(cell_currents).reshape(cells_wide, cells_long)
-    
-    # Create the plot
-    plt.figure(figsize=(10, 5))
-    
-    # Create a heatmap of the cell currents
-    plt.imshow(cell_currents_array, cmap='plasma', aspect='auto')
-    
-    # Add colorbar for reference
-    cbar = plt.colorbar(label='Current (A)')
-    cbar.ax.yaxis.label.set_fontsize(font)
-    
-    # Add labels and title
-    plt.xlabel('Cell number (Long Edge)', fontsize=font)
-    plt.ylabel('Cell number (Short Edge)', fontsize=font)
-    plt.title('Solar Module Current Distribution', fontsize=font+2)
-    
-    # Show the plot
+
+    values = np.asarray(cell_currents, dtype=float)
+    expected = cells_wide * cells_long
+    if values.size != expected:
+        raise ValueError(f"Expected {expected} currents, received {values.size}.")
+    figure, axis = plt.subplots(figsize=(10, 5))
+    image = axis.imshow(
+        values.reshape(cells_wide, cells_long), cmap="plasma", aspect="auto"
+    )
+    colorbar = figure.colorbar(image, ax=axis, label="Current (A)")
+    colorbar.ax.yaxis.label.set_fontsize(font)
+    axis.set_xlabel("Cell number along long edge", fontsize=font)
+    axis.set_ylabel("Cell number along short edge", fontsize=font)
+    axis.set_title("Solar module current distribution", fontsize=font + 2)
+    figure.tight_layout()
     if save:
-        plt.savefig('module_current_distr.png')
-    plt.show()
-
-def module_to_netlist(path, N_s, cell_currents, series_resistances, shunt_resistances, ideality_factor, saturation_current, breakdown_voltage, v_bypass, v_oc, TNOM=25, circuit_name='solar_circuit'):
-    """
-    Create the module netlist for ngspice if N_s > 100 assumes half cut module with butterfly interconnection, if < 100 series interconnection.
-    Both interconnections have 3 bypass diodes. Saves circuit file in path.
-    
-    Parameters
-    ----------
-    path : str
-        path where to save the circuit file and output of spice simulation
-    N_s : int
-        number of cells in the module if N_s>100 halfcut
-    cell_currents : float, array
-        photocurrent of each solar cell, array of 1 or N_s
-    series_resistances : float, array
-        series resistance of each cell, array of 1 or N_s
-    shunt_resistances : float, array
-        shunt resistance/ parallel resitance of each cell, array of 1 or N_s
-    ideality_factor : float
-        ideality factor of the diode
-    saturation_current : float
-        saturation current of the diode
-    breakdown_voltage : float
-        breakdown voltage for each cell, e.g. HJT = 30V, Al-BSF = 15V, PERC = 18V, TOPcon = 25V, IBC = 3V
-    v_bypass : float
-        bypass diode voltage
-    v_oc : float
-        state open circuit voltage for voltage sweep limit which is v_oc+1
-    TNOM : int
-        SPICE nominal temperature can be kept at 25 as diode parameters are adjusted with pvlib
-    circuit_name : str
-        name of circuit file to be saved, default is solar_circuit
-
-    Returns
-    -------
-    circuit_content : str
-        netlist for ngspice simulation
-    half_cut : bool
-        if cells are halfcut or not
-        
-    Notes
-    -------
-    bypass diode voltage, can be estimated with
-        v_bypass = abs(breakdown_voltage - ((N_s/3) - 1)*v_oc/(N_s/3) #N_s/3 because we know there are 3 strings
-        from ST AN3432 - Doc ID 019041 Rev 1 available @ www.st.com
-
-    """
-    
-    #Check variable lengths and make into arrays of N_s
-    if len(cell_currents) == 1:
-        print(f"cell_currents made into array of N_s = {N_s}")
-        cell_currents = [cell_currents[0]] * N_s
-    if len(series_resistances) == 1:
-        print(f"series_resistances made into array of N_s = {N_s}")
-        series_resistances = [series_resistances[0]] * N_s
-    if len(shunt_resistances) == 1:
-        print(f"shunt_resistances made into array of N_s = {N_s}")
-        shunt_resistances = [shunt_resistances[0]] * N_s
-            
-    # Create NGSPICE circuit file
-    cells_as_elem_diode = ''
-    path = path
-    
-    if N_s <= 90:
-        print(f"All series interconnection of {N_s} solar cells")
-        halfcut=False
-        for n in range(0, int(N_s)): #enumerates cell number
-            photocurrent = cell_currents[n]
-            resistance_series = series_resistances[n]
-            resistance_shunt = shunt_resistances[n]
-            rsn = n
-            rpn = n
-            dn = n
-            ni = n
-            rspos = [n+n+1, n+n+2]
-            rppos = [n+n+2, n+n+3]
-            dpos = [n+n+2, n+n+3]
-            ipos = [n+n+3, n+n+2] #inverse current
-            if n == int(N_s-1):
-                elementary_diode = f"""
-*elementary diode model cell {n} byp
-Rs{rsn} {rspos[0]} {rspos[1]} {resistance_series}
-Rp{rpn} {rppos[0]} 0 {resistance_shunt}
-D{dn} {dpos[0]} 0 sd1
-I{ni} 0 {ipos[1]} {photocurrent}
-*bypass diode
-Dby{dn} {0} {int(dpos[0]-N_s/3*2+1)} sdby
-""" #two diode would include *D2 2 0 sd2
-            elif n == 0:
-                elementary_diode = f"""
-*elementary diode model
-Rs{rsn} 1 2 {resistance_series}
-Rp{rpn} 2 3 {resistance_shunt}
-D{dn} 2 3 sd1
-I{ni} 3 2 {photocurrent}
-"""        
-            elif n == (N_s/3-1):
-                elementary_diode = f"""
-*elementary diode model cell {n} byp
-Rs{rsn} {rspos[0]} {rspos[1]} {resistance_series}
-Rp{rpn} {rppos[0]} {rppos[1]} {resistance_shunt}
-D{dn} {dpos[0]} {dpos[1]} sd1
-I{ni} {ipos[0]} {ipos[1]} {photocurrent}
-*bypass diode
-Dby{dn} {dpos[1]} {int(dpos[1]-N_s/3*2)} sdby
-*Rt{rpn} 1 {rppos[1]} 0
-"""   
-            elif n == ((N_s/3)*2)-1:
-                elementary_diode = f"""
-*elementary diode model cell {n} byp
-Rs{rsn} {rspos[0]} {rspos[1]} {resistance_series}
-Rp{rpn} {rppos[0]} {rppos[1]} {resistance_shunt}
-D{dn} {dpos[0]} {dpos[1]} sd1
-I{ni} {ipos[0]} {ipos[1]} {photocurrent}
-*bypass diode
-Dby{dn} {dpos[1]} {int(dpos[1]-N_s/3*2)} sdby
-"""        
-            else:
-                elementary_diode = f"""
-*elementary diode model
-Rs{rsn} {rspos[0]} {rspos[1]} {resistance_series}
-Rp{rpn} {rppos[0]} {rppos[1]} {resistance_shunt}
-D{dn} {dpos[0]} {dpos[1]} sd1
-I{ni} {ipos[0]} {ipos[1]} {photocurrent}
-"""
-            cells_as_elem_diode = cells_as_elem_diode + elementary_diode
-        #taken out of diode model:  RS=0 CJO=1e-12 M=0.33
-        #second diode out: *.model sd2 D (IS=1e-18 N=2 EG=1.1 RS=0 CJO=1e-12 M=0.33)
-    elif 90 < N_s < 200:
-        print(f"Half-cut interconnection of {N_s} solar cells")
-        halfcut=True
-        # ideality_factor = ideality_factor*2
-        print(f"Ideality factor = {ideality_factor}")
-        for n in range(0, int(N_s)): #enumerates cell number
-            if n < N_s/2:
-                photocurrent = cell_currents[n]#/2 #half-cut cell half module current
-                resistance_series = series_resistances[n]#*4 #adjustment of IV curve
-                resistance_shunt = shunt_resistances[n]#*4 #half cut
-                rsn = n
-                rpn = n
-                dn = n
-                ni = n
-                rspos = [n+n+1, n+n+2]
-                rppos = [n+n+2, n+n+3]
-                dpos = [n+n+2, n+n+3]
-                ipos = [n+n+3, n+n+2] #inverse current
-                if n == ((N_s/6)*3)-1:
-                    elementary_diode = f"""
-*elementary diode model cell {n} byp
-Rs{rsn} {rspos[0]} {rspos[1]} {resistance_series}
-Rp{rpn} {rppos[0]} 0 {resistance_shunt}
-D{dn} {dpos[0]} 0 sd1
-I{ni} 0 {ipos[1]} {photocurrent}
-*bypass diode
-Dby{dn} {0} {int(dpos[0]-N_s/3+1)} sdby
-""" #two diode would include *D2 2 0 sd2
-                elif n == 0:
-                    elementary_diode = f"""
-*elementary diode model cell {n}
-Rs{rsn} 1 2 {resistance_series}
-Rp{rpn} 2 3 {resistance_shunt}
-D{dn} 2 3 sd1
-I{ni} 3 2 {photocurrent}
-"""  
-                elif n == (N_s/6-1):
-                    elementary_diode = f"""
-*elementary diode model cell {n} byp
-Rs{rsn} {rspos[0]} {rspos[1]} {resistance_series}
-Rp{rpn} {rppos[0]} {rppos[1]} {resistance_shunt}
-D{dn} {dpos[0]} {dpos[1]} sd1
-I{ni} {ipos[0]} {ipos[1]} {photocurrent}
-*bypass diode
-Dby{dn} {dpos[1]} {int(dpos[1]-N_s/3)} sdby
-*Rt{rpn} 1 {rppos[1]} 0
-"""   
-                elif n == ((N_s/6)*2)-1:
-                    elementary_diode = f"""
-*elementary diode model cell {n} byp
-Rs{rsn} {rspos[0]} {rspos[1]} {resistance_series}
-Rp{rpn} {rppos[0]} {rppos[1]} {resistance_shunt}
-D{dn} {dpos[0]} {dpos[1]} sd1
-I{ni} {ipos[0]} {ipos[1]} {photocurrent}
-*bypass diode
-Dby{dn} {dpos[1]} {int(dpos[1]-N_s/3)} sdby
-"""        
-                else:
-                    elementary_diode = f"""
-*elementary diode model cell {n}
-Rs{rsn} {rspos[0]} {rspos[1]} {resistance_series}
-Rp{rpn} {rppos[0]} {rppos[1]} {resistance_shunt}
-D{dn} {dpos[0]} {dpos[1]} sd1
-I{ni} {ipos[0]} {ipos[1]} {photocurrent}
-"""
-            elif n >= N_s/2:
-                photocurrent = cell_currents[n] #half-cut cell half module current
-                resistance_series = series_resistances[n] #adjustment of IV curve
-                resistance_shunt = shunt_resistances[n] #half cut
-                rsn = n
-                rpn = n
-                dn = n
-                ni = n
-                rspos = [n+n+1, n+n+2]
-                rppos = [n+n+2, n+n+3]
-                dpos = [n+n+2, n+n+3]
-                ipos = [n+n+3, n+n+2] #inverse 
-                if n == int(N_s-1):
-                    elementary_diode = f"""
-*elementary diode model cell {n} byp
-Rs{rsn} {rspos[0]} {rspos[1]} {resistance_series}
-Rp{rpn} {rppos[0]} 0 {resistance_shunt}
-D{dn} {dpos[0]} 0 sd1
-I{ni} 0 {ipos[1]} {photocurrent}
-*bypass diode
-""" #two diode would include *D2 2 0 sd2
-                elif n == N_s/2:
-                    elementary_diode = f"""
-*elementary diode model cell {n}
-Rs{rsn} 1 {rspos[1]} {resistance_series}
-Rp{rpn} {rppos[0]} {rppos[1]} {resistance_shunt}
-D{dn} {dpos[0]} {dpos[1]} sd1
-I{ni} {ipos[0]} {ipos[1]} {photocurrent}
-"""        
-                elif n == ((N_s/6)*4)-1:
-                    endpos = int(n-(N_s/3-2))
-                    elementary_diode = f"""
-*elementary diode model cell {n} byp
-Rs{rsn} {rspos[0]} {rspos[1]} {resistance_series}
-Rp{rpn} {rppos[0]} {endpos} {resistance_shunt}
-D{dn} {dpos[0]} {endpos} sd1
-I{ni} {endpos} {ipos[1]} {photocurrent}
-*bypass diode
-"""   
-                elif n == ((N_s/6)*4):
-                    firstpos = int(n-(N_s/3-1))
-                    elementary_diode = f"""
-*elementary diode model cell {n}
-Rs{rsn} {firstpos} {rspos[1]} {resistance_series}
-Rp{rpn} {rppos[0]} {rppos[1]} {resistance_shunt}
-D{dn} {dpos[0]} {dpos[1]} sd1
-I{ni} {ipos[0]} {ipos[1]} {photocurrent}
-"""   
-                elif n == ((N_s/6)*5)-1:
-                    endpos = int(n-(N_s/6-2))
-                    elementary_diode = f"""
-*elementary diode model cell {n} byp
-Rs{rsn} {rspos[0]} {rspos[1]} {resistance_series}
-Rp{rpn} {rppos[0]} {endpos} {resistance_shunt}
-D{dn} {dpos[0]} {endpos} sd1
-I{ni} {endpos} {ipos[1]} {photocurrent}
-*bypass diode
-"""
-                elif n == ((N_s/6)*5):
-                    firstpos = int(n-(N_s/6-1))
-                    elementary_diode = f"""
-*elementary diode model cell {n}
-Rs{rsn} {firstpos} {rspos[1]} {resistance_series}
-Rp{rpn} {rppos[0]} {rppos[1]} {resistance_shunt}
-D{dn} {dpos[0]} {dpos[1]} sd1
-I{ni} {ipos[0]} {ipos[1]} {photocurrent}
-"""        
-                else:
-                    elementary_diode = f"""
-*elementary diode model cell {n}
-Rs{rsn} {rspos[0]} {rspos[1]} {resistance_series}
-Rp{rpn} {rppos[0]} {rppos[1]} {resistance_shunt}
-D{dn} {dpos[0]} {dpos[1]} sd1
-I{ni} {ipos[0]} {ipos[1]} {photocurrent}
-"""
-                
-            cells_as_elem_diode = cells_as_elem_diode + elementary_diode
-    else:
-        print("No available interconnection, to-do: shingles")
-        
-        
-    circuit_content = f"""
-* One-diode solar module simulation
-
-* Define the diode model
-.model sd1 D (IS={saturation_current} N={ideality_factor} EG=1.12 BV={breakdown_voltage})
-.model sdby D (IS=1e-7 N=1 BV={v_bypass} IBV=20)
-
-* Define the DC sweep
-V1 1 0
-
-{cells_as_elem_diode}
-
-.temp = {TNOM}
-.options tnom={TNOM}
-.control
-dc V1 0 {v_oc+1} 0.1
-print dc v(1) i(D1)
-set filetype=ascii 
-write {path}/solar_circuit.out
-write {path}/solar_circuit.txt
-
-quit
-.endc
-"""
-
-    with open(f"{path}/{circuit_name}.cir", "w") as circuit_file:
-        circuit_file.write(circuit_content)
-    
-    return circuit_content, halfcut
-
-# def ngpsice_read_voltage_current(path, halfcut, N_s): #Old version
-#     import pandas as pd
-#     """
-#     Read the volatage and current from the ngspice output file
-    
-#     Parameters
-#     ----------
-#     path : str
-#         path where output of spice simulation file is saved
-#     half_cut : bool
-#         if cells are halfcut or not
-#     N_s : int
-#         number of solar cells
-
-#     Returns
-#     -------
-#     voltage : float, array
-#         voltage values
-#     current : float, array
-#         current values
-#     df_iv : float, pandas DataFrame
-#         IV values
-    
-#     Notes
-#     -------
-#     If halfcut is true output IV for a halfcut module interconnection, esle for a series interconnection with full size cells
-#     This code can be further modified to show current and voltage of specific components such as the bypass diodes, the output file has all nodes of the simulation
-
-#     """
-#     voltage = []
-#     current = []
-#     df_iv = pd.DataFrame()
-#     # Extract data from NGSPICE output file
-#     with open(path+"/solar_circuit.out", "r") as output_file:
-#         lines = output_file.readlines()
-#         for nl, line in enumerate(lines):
-#             if "Values" in line:
-#                 if halfcut:
-#                     for nv in range(nl+1 ,len(lines)-2, N_s*2): #was 6 before bypassD
-#                         # print(nv+N_s+4)
-#                         # df = pd.DataFrame()
-#                         voltage.append(float(lines[nv].split()[1]))
-#                         current.append(float(lines[nv+(N_s*2)-2]))
-#                 else:
-#                     for nv in range(nl+1 ,len(lines)-2, N_s*2+3): #was 6 before bypassD
-#                         print(nv+N_s+4)
-#                         # df = pd.DataFrame()
-#                         voltage.append(float(lines[nv].split()[1]))
-#                         current.append(float(lines[nv+(N_s*2)+1]))
-#     df_iv['V'] = voltage
-#     df_iv['I'] = current
-    
-#     return voltage, current, df_iv
+        output = Path("module_current_distr.png") if save is True else Path(save)
+        figure.savefig(output, dpi=150, bbox_inches="tight")
+    return axis
 
 
-    
-def ngpsice_read_voltage_current_modules(path):
-    """
-    Read the volatage and current from the ngspice output file
-    
-    Parameters
-    ----------
-    path : str
-        path where output of spice simulation file is saved
-
-    Returns
-    -------
-    voltage : float, array
-        voltage values
-    current : float, array
-        current values
-    df_iv : float, pandas DataFrame
-        IV values
-    
-    Notes
-    -------
-    If halfcut is true output IV for a halfcut module interconnection, esle for a series interconnection with full size cells
-    This code can be further modified to show current and voltage of specific components such as the bypass diodes, the output file has all nodes of the simulation
-
-    """
-    import pandas as pd
-
-    voltage = []
-    current = []
-    flag = False
-    df_iv = pd.DataFrame()
-    # Extract data from NGSPICE output file
-    with open(path+"/solar_circuit.out", "r") as output_file:
-        lines = output_file.readlines()
-        for nl, line in enumerate(lines):
-            # print(line)
-            
-            if flag:
-                if line =='\n':
-                    current.append(float(lines[nl-1]))
-                elif line.split("\t")[0]!='':
-                    voltage.append(float(line.split('\t')[1]))              
-                    
-            if "Values" in line:
-                flag=True    
-                
-                
-    df_iv['V'] = voltage
-    df_iv['I'] = current
-    
-    return voltage, current, df_iv
+def _expand_parameter(
+    values, name: str, cells_per_module: int, module_count: int
+) -> np.ndarray:
+    """Normalize scalar, per-module, or full-string parameters."""
+    total_cells = cells_per_module * module_count
+    array = np.asarray(values, dtype=float).reshape(-1)
+    if array.size == 1:
+        return np.full(total_cells, array.item())
+    if array.size == cells_per_module:
+        return np.tile(array, module_count)
+    if array.size == total_cells:
+        return array
+    raise ValueError(
+        f"{name} must contain 1, {cells_per_module}, or {total_cells} values; "
+        f"got {array.size}."
+    )
 
 
-def modules_halfcut_netlist_builder(path, N_s, N_modules, cell_currents_, series_resistances_, shunt_resistances_,
-                             ideality_factor, saturation_current, breakdown_voltage, v_bypass, v_oc,
-                             N_byp=3, TNOM=25, circuit_name='solar_circuit'):
-    """
-    Build a netlist for a half-cut solar module with bypass diodes.
-    
-    Parameters
-    ----------
-    path : str
-        Path where to save the circuit file and output of spice simulation.
-    N_s : int
-        Number of solar cells in each module.
-    N_modules : int
-        Number of modules.
-    cell_currents_ : float, array
-        Photocurrent of each solar cell.
-    series_resistances_ : float, array
-        Series resistance of each cell.
-    shunt_resistances_ : float, array
-        Shunt resistance of each cell.
-    ideality_factor : float
-        Ideality factor of the diode.
-    saturation_current : float
-        Saturation current of the diode.
-    breakdown_voltage : float
-        Breakdown voltage for each cell.
-    v_bypass : float
-        Bypass diode voltage.
-    v_oc : float
-        Open circuit voltage for voltage sweep limit.
-    N_byp : int
-        Number of bypass diodes.
-    TNOM : int
-        SPICE nominal temperature.
-    circuit_name : str
-        Name of circuit file to be saved.
-    
-    Returns
-    -------
-    circuit_content : str
-        Netlist for ngspice simulation.
-    """
+def _output_node(
+    module: int, branch: int | None, cell: int, last_cell: int, module_end: str
+) -> str:
+    if cell == last_cell:
+        return module_end
+    if branch is None and module == 0:
+        # Preserve the original numeric-node layout for the single-module
+        # standard-cell workflow used by the published thermal notebook.
+        return str(2 * cell + 3)
+    branch_name = "" if branch is None else f"B{branch}"
+    return f"M{module}{branch_name}N{cell}"
 
-    import numpy as np
 
-    #Make variables length N_s*N_modules if they are not already that
-    if not len(cell_currents_) == N_s*N_modules: 
-        cell_currents = np.tile(cell_currents_, N_modules)
-    else:
-        cell_currents = cell_currents_
-    if not len(series_resistances_) == N_s*N_modules:        
-        series_resistances = np.tile(series_resistances_, N_modules)
-    else:
-        series_resistances = series_resistances_
-    if not len(shunt_resistances_) == N_s*N_modules:
-        shunt_resistances = np.tile(shunt_resistances_, N_modules)
-    else:
-        shunt_resistances = shunt_resistances_
+def _append_cell(
+    lines: list[str],
+    element_id: str,
+    start: str,
+    end: str,
+    iph: float,
+    rs: float,
+    rsh: float,
+    diode_node: str | None = None,
+) -> None:
+    diode_node = diode_node or f"{element_id}D"
+    lines.extend(
+        [
+            f"* cell {element_id}",
+            f"Rs{element_id} {start} {diode_node} {rs:.12g}",
+            f"Rsh{element_id} {diode_node} {end} {rsh:.12g}",
+            f"D{element_id} {diode_node} {end} sd1",
+            f"Iph{element_id} {end} {diode_node} DC {iph:.12g}",
+        ]
+    )
 
-    #Checking
-    print(f"Length of all variables: Rsh {len(shunt_resistances)}, Rs {len(series_resistances)}, Iph {len(cell_currents)}")
-            
-    # Create NGSPICE circuit file
-    cells_as_elem_diode = ''
-    path = path
-    
-    #String end nodes
-    N_nodes = N_modules*N_s + 2
-    N_cells = N_modules*N_s
-    N_cellstring = N_modules/N_byp
-    N_sjunction = N_modules*N_byp
-    first_break = N_cellstring + 2
-    string_junctions = np.arange(N_cells/2/N_sjunction, N_cells/2+1, N_cells/2/N_sjunction)
-    
-    
-    elementary_diode = f"""
-    *elementary diode model cell {0}
-    Rs{0} {1} {2} {series_resistances[0]}
-    Rp{0} {2} {3} {shunt_resistances[0]}
-    D{0} {2} {3} sd1
-    I{0} {3} {2} {cell_currents[0]}
-    """  
-    cells_as_elem_diode = cells_as_elem_diode + elementary_diode
-    
-    for n in range(1, int(N_cells/2)-1): #enumerates all cells
-        photocurrent = cell_currents[n]#/2 #half-cut cell half module current
-        resistance_series = series_resistances[n]#*4 #adjustment of IV curve
-        resistance_shunt = shunt_resistances[n]#*4 #half cut
-        
-        rsn = n
-        rpn = n
-        dn = n
-        ni = n
-    
-        rspos = [n+n+1, n+n+2]
-        rppos = [n+n+2, n+n+3]
-        dpos = [n+n+2, n+n+3]
-        ipos = [n+n+3, n+n+2] #inverse current
-    
-        elementary_diode = f"""
-    *elementary diode model cell {n}
-    Rs{rsn} {rspos[0]} {rspos[1]} {resistance_series}
-    Rp{rpn} {rppos[0]} {rppos[1]} {resistance_shunt}
-    D{dn} {dpos[0]} {dpos[1]} sd1
-    I{ni} {ipos[0]} {ipos[1]} {photocurrent}
-        """  
-        cells_as_elem_diode = cells_as_elem_diode + elementary_diode
-    
-    n +=1
-    rsn = n
-    rpn = n
-    dn = n
-    ni = n
-    elementary_diode = f"""
-        *elementary diode model cell {n}
-        Rs{rsn} {n+n+1} {n+n+2} {series_resistances[n]} 
-        Rp{rpn} {n+n+2} {0} {shunt_resistances[n]}
-        D{dn} {n+n+2} {0} sd1
-        I{ni} {0} {n+n+2} {cell_currents[n]}
-        """  
-    cells_as_elem_diode = cells_as_elem_diode + elementary_diode
-    
-    n +=1
-    rsn = n
-    rpn = n
-    dn = n
-    ni = n
-    elementary_diode = f"""
-        *elementary diode model cell {n}
-        Rs{rsn} {1} {n+n+2} {series_resistances[n]} 
-        Rp{rpn} {n+n+2} {n+n+3} {shunt_resistances[n]}
-        D{dn} {n+n+2} {n+n+3} sd1
-        I{ni} {n+n+3} {n+n+2} {cell_currents[n]}
-        """  
-    cells_as_elem_diode = cells_as_elem_diode + elementary_diode
-    flag=False
-    count_stringjunctions = 0
-    for n in range(int(N_cells/2)+1, int(N_cells)-1): #enumerates all cells
-        photocurrent = cell_currents[n]#/2 #half-cut cell half module current
-        resistance_series = series_resistances[n]#*4 #adjustment of IV curve
-        resistance_shunt = shunt_resistances[n]#*4 #half cut
-    
-        if (n+1)%(N_cells/2/N_sjunction) == 0:        
-            node = n+n
-            rsn = n
-            rpn = n
-            dn = n
-            ni = n
-    
-            rspos = [node+1 , node+2] 
-            rppos = [node+2 , int(string_junctions[count_stringjunctions]*2+1)] 
-            dpos = [node+2 , int(string_junctions[count_stringjunctions]*2+1)] 
-            ipos = [int(string_junctions[count_stringjunctions]*2+1), node+2]
-            
-            elementary_diode = f"""
-    *elementary diode model cell {n} bypass
-    Rs{rsn} {rspos[0]} {rspos[1]} {resistance_series}
-    Rp{rpn} {rppos[0]} {rppos[1]} {resistance_shunt}
-    D{dn} {dpos[0]} {dpos[1]} sd1
-    I{ni} {ipos[0]} {ipos[1]} {photocurrent}
-            """  
-            cells_as_elem_diode = cells_as_elem_diode + elementary_diode
-            flag = True
-        elif flag:
-            node = n+n
-            rsn = n
-            rpn = n
-            dn = n
-            ni = n
-            
-            rspos = [int(string_junctions[count_stringjunctions]*2+1), n+n+2]
-            rppos = [n+n+2, n+n+3]
-            dpos = [n+n+2, n+n+3]
-            ipos = [n+n+3, n+n+2] #inverse current
-            
-            elementary_diode = f"""
-    *elementary diode model cell {n} bypass
-    Rs{rsn} {rspos[0]} {rspos[1]} {resistance_series}
-    Rp{rpn} {rppos[0]} {rppos[1]} {resistance_shunt}
-    D{dn} {dpos[0]} {dpos[1]} sd1
-    I{ni} {ipos[0]} {ipos[1]} {photocurrent}
-            """  
-            cells_as_elem_diode = cells_as_elem_diode + elementary_diode
-            count_stringjunctions += 1
-            flag=False
-    
+
+def _append_bypass_diodes(
+    lines: list[str],
+    module: int,
+    branch: int | None,
+    input_node: str,
+    output_node: str,
+    cells_in_branch: int,
+    bypass_diodes: int,
+) -> None:
+    if cells_in_branch % bypass_diodes:
+        raise ValueError(
+            f"{cells_in_branch} cells cannot be divided among {bypass_diodes} "
+            "bypass diodes."
+        )
+    cells_per_substring = cells_in_branch // bypass_diodes
+    branch_name = "" if branch is None else f"B{branch}"
+    for bypass in range(bypass_diodes):
+        first = bypass * cells_per_substring
+        last = first + cells_per_substring - 1
+        start = (
+            input_node
+            if first == 0
+            else _output_node(
+                module, branch, first - 1, cells_in_branch - 1, output_node
+            )
+        )
+        end = _output_node(module, branch, last, cells_in_branch - 1, output_node)
+        lines.extend(
+            [
+                (
+                    f"* bypass diode module {module} branch {branch_name} "
+                    f"substring {bypass}"
+                ),
+                f"DbyM{module}{branch_name}{bypass} {end} {start} sdby",
+            ]
+        )
+
+
+def _append_series_module(
+    lines: list[str],
+    module: int,
+    input_node: str,
+    output_node: str,
+    photocurrents: np.ndarray,
+    series_resistances: np.ndarray,
+    shunt_resistances: np.ndarray,
+    bypass_diodes: int,
+) -> None:
+    cells = photocurrents.size
+    for cell in range(cells):
+        start = (
+            input_node
+            if cell == 0
+            else _output_node(module, None, cell - 1, cells - 1, output_node)
+        )
+        end = _output_node(module, None, cell, cells - 1, output_node)
+        _append_cell(
+            lines,
+            f"M{module}C{cell}",
+            start,
+            end,
+            photocurrents[cell],
+            series_resistances[cell],
+            shunt_resistances[cell],
+            str(2 * cell + 2) if module == 0 else None,
+        )
+    _append_bypass_diodes(
+        lines, module, None, input_node, output_node, cells, bypass_diodes
+    )
+
+
+def _append_halfcut_module(
+    lines: list[str],
+    module: int,
+    input_node: str,
+    output_node: str,
+    photocurrents: np.ndarray,
+    series_resistances: np.ndarray,
+    shunt_resistances: np.ndarray,
+    bypass_diodes: int,
+) -> None:
+    if photocurrents.size % 2:
+        raise ValueError("A half-cut module must contain an even number of cells.")
+    cells_per_branch = photocurrents.size // 2
+    for branch in range(2):
+        offset = branch * cells_per_branch
+        for cell in range(cells_per_branch):
+            index = offset + cell
+            start = (
+                input_node
+                if cell == 0
+                else _output_node(
+                    module, branch, cell - 1, cells_per_branch - 1, output_node
+                )
+            )
+            end = _output_node(module, branch, cell, cells_per_branch - 1, output_node)
+            _append_cell(
+                lines,
+                f"M{module}B{branch}C{cell}",
+                start,
+                end,
+                photocurrents[index],
+                series_resistances[index],
+                shunt_resistances[index],
+            )
+        _append_bypass_diodes(
+            lines,
+            module,
+            branch,
+            input_node,
+            output_node,
+            cells_per_branch,
+            bypass_diodes,
+        )
+
+
+def _build_netlist(
+    *,
+    path: str | os.PathLike[str],
+    cells_per_module: int,
+    modules: int,
+    cell_currents,
+    series_resistances,
+    shunt_resistances,
+    ideality_factor: float,
+    saturation_current: float,
+    breakdown_voltage: float,
+    bypass_breakdown_voltage: float,
+    module_open_circuit_voltage: float,
+    topology: str,
+    bypass_diodes: int,
+    nominal_temperature: float,
+    circuit_name: str,
+    voltage_step: float,
+) -> str:
+    """Build and persist an ngspice DC sweep netlist."""
+    if cells_per_module <= 0 or modules <= 0:
+        raise ValueError("cells_per_module and modules must be positive.")
+    if bypass_diodes <= 0 or voltage_step <= 0:
+        raise ValueError("bypass_diodes and voltage_step must be positive.")
+    if topology not in {"series", "halfcut"}:
+        raise ValueError(f"Unknown module topology: {topology}.")
+    photocurrents = _expand_parameter(
+        cell_currents, "cell_currents", cells_per_module, modules
+    )
+    cell_rs = _expand_parameter(
+        series_resistances, "series_resistances", cells_per_module, modules
+    )
+    cell_rsh = _expand_parameter(
+        shunt_resistances, "shunt_resistances", cells_per_module, modules
+    )
+    if np.any(cell_rs < 0):
+        raise ValueError("series_resistances must be non-negative.")
+    if np.any(cell_rsh <= 0):
+        raise ValueError("shunt_resistances must be positive.")
+
+    directory = Path(path).expanduser().resolve()
+    directory.mkdir(parents=True, exist_ok=True)
+    circuit_file = directory / f"{circuit_name}.cir"
+    output_file = directory / f"{circuit_name}.out"
+    text_file = directory / f"{circuit_name}.txt"
+    lines = [
+        "* pvcracks photovoltaic SPICE simulation",
+        (
+            f"* topology={topology}, modules={modules}, "
+            f"cells_per_module={cells_per_module}"
+        ),
+        (
+            f".model sd1 D (IS={saturation_current:.12g} "
+            f"N={ideality_factor:.12g} EG=1.12 "
+            f"BV={breakdown_voltage:.12g})"
+        ),
+        f".model sdby D (IS=1e-7 N=1 BV={bypass_breakdown_voltage:.12g} IBV=20)",
+        "V1 1 0 0",
+    ]
+    for module in range(modules):
+        start_index = module * cells_per_module
+        stop_index = start_index + cells_per_module
+        input_node = "1" if module == 0 else f"M{module - 1}OUT"
+        output_node = "0" if module == modules - 1 else f"M{module}OUT"
+        parameters = (
+            photocurrents[start_index:stop_index],
+            cell_rs[start_index:stop_index],
+            cell_rsh[start_index:stop_index],
+        )
+        if topology == "series":
+            _append_series_module(
+                lines, module, input_node, output_node, *parameters, bypass_diodes
+            )
         else:
-            photocurrent = cell_currents[n]#/2 #half-cut cell half module current
-            resistance_series = series_resistances[n]#*4 #adjustment of IV curve
-            resistance_shunt = shunt_resistances[n]#*4 #half cut
-            
-            rsn = n
-            rpn = n
-            dn = n
-            ni = n
-        
-            rspos = [n+n+1, n+n+2]
-            rppos = [n+n+2, n+n+3]
-            dpos = [n+n+2, n+n+3]
-            ipos = [n+n+3, n+n+2] #inverse current
-        
-            elementary_diode = f"""
-    *elementary diode model cell {n}
-    Rs{rsn} {rspos[0]} {rspos[1]} {resistance_series}
-    Rp{rpn} {rppos[0]} {rppos[1]} {resistance_shunt}
-    D{dn} {dpos[0]} {dpos[1]} sd1
-    I{ni} {ipos[0]} {ipos[1]} {photocurrent}
-            """  
-            cells_as_elem_diode = cells_as_elem_diode + elementary_diode
-    
-    n += 1
-    rsn = n
-    rpn = n
-    dn = n
-    ni = n
-    elementary_diode = f"""
-        *elementary diode model cell {n}
-        Rs{rsn} {n+n+1} {n+n+2} {series_resistances[n]} 
-        Rp{rpn} {n+n+2} {0} {shunt_resistances[n]}
-        D{dn} {n+n+2} {0} sd1
-        I{ni} {0} {n+n+2} {cell_currents[n]}
-        """  
-    cells_as_elem_diode = cells_as_elem_diode + elementary_diode
-    
-    
-    node = int(string_junctions[0]*2+1)
-    dbyn = 0
-    elementary_diode=f'''
-    *bypass diode
-    Dby{dbyn} {node} {1} sdby
-    '''
-    cells_as_elem_diode = cells_as_elem_diode + elementary_diode
-    
-    for pos, junk in enumerate(string_junctions[:-1]):
-        
-        node = int(junk*2+1)
-        second = string_junctions[pos+1]
-        node2 = int(second*2+1)
-    
-        dbyn = pos+1
-    
-        elementary_diode=f'''
-        Dby{dbyn} {node2} {node} sdby
-        '''
-        cells_as_elem_diode = cells_as_elem_diode + elementary_diode
-    elementary_diode=f'''
-    Dby{dbyn+1} {0} {node2} sdby
-        '''
-    cells_as_elem_diode = cells_as_elem_diode + elementary_diode
-    
-    circuit_paras = f"""
-        * One-diode solar module simulation
-    * Define the diode model
-    .model sd1 D (IS={saturation_current} N={ideality_factor} EG=1.12 BV={breakdown_voltage})
-    .model sdby D (IS=1e-7 N=1 BV={v_bypass} IBV=20)
-    
-    * Define the DC sweep
-    V1 1 {0} 
-    
-    .temp = {TNOM}
-    .options tnom={TNOM}
-    .control
-    dc V1 0 {int(v_oc*N_modules + 1)} 1
-    print dc v(1) i()
-    set filetype=ascii 
-    write {path}/solar_circuit.out
-    write {path}/solar_circuit.txt
-    
-    quit
-    .endc
-    """
-    circuit_content = cells_as_elem_diode + circuit_paras
-    
-    # Save the circuit file
-    with open(f"{path}/{circuit_name}.cir", "w") as circuit_file:
-        circuit_file.write(circuit_content)
+            _append_halfcut_module(
+                lines, module, input_node, output_node, *parameters, bypass_diodes
+            )
+    sweep_limit = modules * module_open_circuit_voltage + 1.0
+    lines.extend(
+        [
+            f".temp {nominal_temperature:.12g}",
+            f".options tnom={nominal_temperature:.12g}",
+            ".control",
+            "set filetype=ascii",
+            f"dc V1 0 {sweep_limit:.12g} {voltage_step:.12g}",
+            "print dc v(1) i(V1)",
+            f"write {output_file.as_posix()}",
+            f"write {text_file.as_posix()}",
+            "quit",
+            ".endc",
+            ".end",
+        ]
+    )
+    netlist = "\n".join(lines) + "\n"
+    circuit_file.write_text(netlist, encoding="utf-8")
+    return netlist
 
-    circuit_content = f"""
-* One-diode solar module simulation
 
-* Define the diode model
-.model sd1 D (IS={saturation_current} N={ideality_factor} EG=1.12 BV={breakdown_voltage})
-.model sdby D (IS=1e-7 N=1 BV={v_bypass} IBV=20)
+def module_to_netlist(
+    path: str | os.PathLike[str],
+    N_s: int,
+    cell_currents,
+    series_resistances,
+    shunt_resistances,
+    ideality_factor: float,
+    saturation_current: float,
+    breakdown_voltage: float,
+    v_bypass: float,
+    v_oc: float,
+    TNOM: float = 25,
+    circuit_name: str = "solar_circuit",
+) -> tuple[str, bool]:
+    """Build one module and return its netlist text and half-cut topology flag."""
+    half_cut = N_s > 90
+    netlist = _build_netlist(
+        path=path,
+        cells_per_module=N_s,
+        modules=1,
+        cell_currents=cell_currents,
+        series_resistances=series_resistances,
+        shunt_resistances=shunt_resistances,
+        ideality_factor=ideality_factor,
+        saturation_current=saturation_current,
+        breakdown_voltage=breakdown_voltage,
+        bypass_breakdown_voltage=v_bypass,
+        module_open_circuit_voltage=v_oc,
+        topology="halfcut" if half_cut else "series",
+        bypass_diodes=3,
+        nominal_temperature=TNOM,
+        circuit_name=circuit_name,
+        voltage_step=0.1,
+    )
+    return netlist, half_cut
 
-* Define the DC sweep
-V1 1 0
 
-{cells_as_elem_diode}
-
-.temp = {TNOM}
-.options tnom={TNOM}
-.control
-dc V1 0 {v_oc+1} 0.1
-print dc v(1) i(V1)
-set filetype=ascii 
-write {path}/solar_circuit.out
-write {path}/solar_circuit.txt
-
-quit
-.endc
-"""
-
-def modules_series_netlist_builder(
-    path,
-    N_s,
-    N_modules,
+def modules_halfcut_netlist_builder(
+    path: str | os.PathLike[str],
+    N_s: int,
+    N_modules: int,
     cell_currents_,
     series_resistances_,
     shunt_resistances_,
-    ideality_factor,
-    saturation_current,
-    breakdown_voltage,
-    v_bypass,
-    v_oc,
-    N_byp=3,
-    TNOM=25,
-    circuit_name="solar_circuit",
-    v_step=0.1,
-):
-    """
-    Build a netlist for a string of standard non-halfcut series-connected modules.
-    Each module contains N_s cells in series and N_byp bypass diodes distributed
-    evenly across the module substring groups.
+    ideality_factor: float,
+    saturation_current: float,
+    breakdown_voltage: float,
+    v_bypass: float,
+    v_oc: float,
+    N_byp: int = 3,
+    TNOM: float = 25,
+    circuit_name: str = "solar_circuit",
+    v_step: float = 0.1,
+) -> str:
+    """Build a series string of half-cut modules from scalar or cell arrays."""
+    return _build_netlist(
+        path=path,
+        cells_per_module=N_s,
+        modules=N_modules,
+        cell_currents=cell_currents_,
+        series_resistances=series_resistances_,
+        shunt_resistances=shunt_resistances_,
+        ideality_factor=ideality_factor,
+        saturation_current=saturation_current,
+        breakdown_voltage=breakdown_voltage,
+        bypass_breakdown_voltage=v_bypass,
+        module_open_circuit_voltage=v_oc,
+        topology="halfcut",
+        bypass_diodes=N_byp,
+        nominal_temperature=TNOM,
+        circuit_name=circuit_name,
+        voltage_step=v_step,
+    )
+
+
+def modules_series_netlist_builder(
+    path: str | os.PathLike[str],
+    N_s: int,
+    N_modules: int,
+    cell_currents_,
+    series_resistances_,
+    shunt_resistances_,
+    ideality_factor: float,
+    saturation_current: float,
+    breakdown_voltage: float,
+    v_bypass: float,
+    v_oc: float,
+    N_byp: int = 3,
+    TNOM: float = 25,
+    circuit_name: str = "solar_circuit",
+    v_step: float = 0.1,
+) -> str:
+    """Build a series string of conventional full-cell modules."""
+    return _build_netlist(
+        path=path,
+        cells_per_module=N_s,
+        modules=N_modules,
+        cell_currents=cell_currents_,
+        series_resistances=series_resistances_,
+        shunt_resistances=shunt_resistances_,
+        ideality_factor=ideality_factor,
+        saturation_current=saturation_current,
+        breakdown_voltage=breakdown_voltage,
+        bypass_breakdown_voltage=v_bypass,
+        module_open_circuit_voltage=v_oc,
+        topology="series",
+        bypass_diodes=N_byp,
+        nominal_temperature=TNOM,
+        circuit_name=circuit_name,
+        voltage_step=v_step,
+    )
+
+
+def _resolve_ngspice_output(
+    path: str | os.PathLike[str], output_filename: str
+) -> Path:
+    requested = Path(path).expanduser()
+    output = requested if requested.is_file() else requested / output_filename
+    output = output.resolve()
+    if not output.is_file():
+        raise FileNotFoundError(f"ngspice output file does not exist: {output}")
+    return output
+
+
+def _read_ngspice_ascii_raw(
+    path: str | os.PathLike[str], output_filename: str = "solar_circuit.out"
+) -> pd.DataFrame:
+    """Read an ngspice ASCII raw file into a table of named variables."""
+    output = _resolve_ngspice_output(path, output_filename)
+    lines = output.read_text(encoding="utf-8", errors="replace").splitlines()
+    nvars = None
+    npoints = None
+    variables_start = None
+    values_start = None
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped.startswith("No. Variables:"):
+            nvars = int(stripped.partition(":")[2].strip())
+        elif stripped.startswith("No. Points:"):
+            npoints = int(stripped.partition(":")[2].strip())
+        elif stripped == "Variables:":
+            variables_start = index + 1
+        elif stripped == "Values:":
+            values_start = index + 1
+            break
+    if nvars is None or variables_start is None or values_start is None:
+        raise ValueError(f"{output} is not a complete ngspice ASCII raw file.")
+
+    variables: list[str] = []
+    for line in lines[variables_start : values_start - 1]:
+        fields = line.split()
+        if len(fields) >= 2:
+            variables.append(fields[1])
+    if len(variables) != nvars:
+        raise ValueError(
+            f"Expected {nvars} ngspice variables, but found {len(variables)} "
+            f"in {output}."
+        )
+
+    rows: list[list[float]] = []
+    point: list[float] = []
+    for line in lines[values_start:]:
+        fields = line.split()
+        if not fields:
+            continue
+        try:
+            value = (
+                float(fields[1])
+                if len(fields) >= 2 and fields[0].isdigit()
+                else float(fields[0])
+            )
+        except ValueError as error:
+            raise ValueError(
+                f"Could not parse ngspice value row {line!r} in {output}."
+            ) from error
+        point.append(value)
+        if len(point) == nvars:
+            rows.append(point)
+            point = []
+    if point:
+        raise ValueError(f"Incomplete final ngspice sweep point in {output}.")
+
+    dataframe = pd.DataFrame(rows, columns=variables)
+    if npoints is not None and len(dataframe) != npoints:
+        warnings.warn(
+            f"ngspice header reports {npoints} points, but {len(dataframe)} were parsed.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+    if dataframe.empty:
+        raise ValueError(f"No sweep values were found in {output}.")
+    return dataframe
+
+
+def _iter_cell_connections(cells_per_module: int, modules: int, topology: str):
+    """Yield pvspice cell nodes in the same order used by the netlist builders."""
+    for module in range(modules):
+        input_node = "1" if module == 0 else f"M{module - 1}OUT"
+        module_end = "0" if module == modules - 1 else f"M{module}OUT"
+        if topology == "series":
+            for cell in range(cells_per_module):
+                start = (
+                    input_node
+                    if cell == 0
+                    else _output_node(
+                        module, None, cell - 1, cells_per_module - 1, module_end
+                    )
+                )
+                end = _output_node(
+                    module, None, cell, cells_per_module - 1, module_end
+                )
+                diode = str(2 * cell + 2) if module == 0 else f"M{module}C{cell}D"
+                yield module, None, cell, module * cells_per_module + cell, start, diode, end
+            continue
+
+        cells_per_branch = cells_per_module // 2
+        for branch in range(2):
+            for cell in range(cells_per_branch):
+                start = (
+                    input_node
+                    if cell == 0
+                    else _output_node(
+                        module, branch, cell - 1, cells_per_branch - 1, module_end
+                    )
+                )
+                end = _output_node(
+                    module, branch, cell, cells_per_branch - 1, module_end
+                )
+                diode = f"M{module}B{branch}C{cell}D"
+                cell_index = module * cells_per_module + branch * cells_per_branch + cell
+                yield module, branch, cell, cell_index, start, diode, end
+
+
+def ngspice_read_cell_level_ivs(
+    path: str | os.PathLike[str],
+    N_s: int = 60,
+    series_resistances: float | list[float] | np.ndarray | None = None,
+    output_filename: str = "solar_circuit.out",
+    current_col: str = "i(v1)",
+    flip_module_current_if_negative: bool = True,
+    N_modules: int = 1,
+    topology: str = "series",
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Reconstruct cell IV curves from a pvspice ngspice ASCII raw output.
+
+    The reader supports the node layouts produced by
+    :func:`module_to_netlist`, :func:`modules_series_netlist_builder`, and
+    :func:`modules_halfcut_netlist_builder`. It therefore handles conventional
+    series modules, strings of series modules, half-cut modules, and strings
+    of half-cut modules. The explicitly supplied ``N_s``, ``N_modules``, and
+    ``topology`` must match the netlist that produced the raw file.
 
     Parameters
     ----------
-    path : str
-        Path where to save the circuit file and output of spice simulation.
-    N_s : int
-        Number of cells in each module, e.g. 60.
-    N_modules : int
-        Number of modules in the string.
-    cell_currents_ : float or array
-        Photocurrent of each solar cell. Length can be:
-          - 1
-          - N_s
-          - N_s * N_modules
-    series_resistances_ : float or array
-        Series resistance of each solar cell. Length can be:
-          - 1
-          - N_s
-          - N_s * N_modules
-    shunt_resistances_ : float or array
-        Shunt resistance of each solar cell. Length can be:
-          - 1
-          - N_s
-          - N_s * N_modules
-    ideality_factor : float
-        Ideality factor of the diode model.
-    saturation_current : float
-        Saturation current of the diode model.
-    breakdown_voltage : float
-        Cell breakdown voltage.
-    v_bypass : float
-        Bypass diode voltage.
-    v_oc : float
-        Approximate open-circuit voltage per module for sweep limit.
-    N_byp : int
-        Number of bypass diodes per module. Default is 3.
-    TNOM : float
-        SPICE nominal temperature.
-    circuit_name : str
-        Name of circuit file to be saved.
-    v_step : float
-        DC sweep voltage step.
+    path
+        Directory containing the ngspice ASCII raw output, or the output file
+        itself.
+    N_s
+        Total number of cells in each module. For half-cut modules this is the
+        total across both parallel branches.
+    series_resistances
+        One resistance, a per-module sequence of ``N_s`` resistances, a
+        full-string sequence of ``N_s * N_modules`` resistances, or ``None``.
+        When omitted, cell-current columns contain ``NaN`` or are absent from
+        the wide table.
+    output_filename
+        Output name used when ``path`` is a directory.
+    current_col
+        Terminal-current variable in the raw output. If it is absent, the
+        last available current variable is used and a warning is emitted.
+    flip_module_current_if_negative
+        Change a negative median terminal current to the positive PV-current
+        convention used by pvspice plots.
+    N_modules
+        Number of series-connected modules represented by the circuit.
+    topology
+        ``"series"`` for conventional modules or ``"halfcut"`` for modules
+        with two parallel cell branches.
 
     Returns
     -------
-    circuit_content : str
-        Netlist text.
+    df_cells_long, df_cells_wide, df_raw
+        A long-form table with one row per cell and sweep point, a wide-form
+        table with per-cell curves, and the complete raw ngspice table. The
+        long form identifies ``module``, ``branch`` (``NaN`` for conventional
+        series modules), local ``cell``, and full-string ``cell_index``. For a
+        string, the wide table also contains ``string_V``, ``string_I``, and
+        ``V_module_<n>`` terminal-voltage columns.
     """
+    if N_s <= 0 or N_modules <= 0:
+        raise ValueError("N_s and N_modules must be positive integers.")
+    if topology not in {"series", "halfcut"}:
+        raise ValueError("topology must be either 'series' or 'halfcut'.")
+    if topology == "halfcut" and N_s % 2:
+        raise ValueError("N_s must be even for a half-cut module.")
 
-    import numpy as np
-    import os
-
-    total_cells = N_s * N_modules
-
-    def _as_array(x):
-        if np.isscalar(x):
-            return np.asarray([x], dtype=float)
-        return np.asarray(x, dtype=float)
-
-    def _expand_param(arr, name):
-        arr = _as_array(arr)
-        if len(arr) == 1:
-            print(f"{name} made into array of N_s*N_modules = {total_cells}")
-            return np.full(total_cells, arr[0], dtype=float)
-        elif len(arr) == N_s:
-            print(f"{name} tiled from one-module length N_s={N_s} to total length {total_cells}")
-            return np.tile(arr, N_modules)
-        elif len(arr) == total_cells:
-            return arr.astype(float)
-        else:
+    output = _resolve_ngspice_output(path, output_filename)
+    df_raw = _read_ngspice_ascii_raw(output)
+    columns_lower = {column.lower(): column for column in df_raw.columns}
+    sweep_column = columns_lower.get("v(v-sweep)", df_raw.columns[0])
+    terminal_voltage_column = columns_lower.get("v(1)", sweep_column)
+    selected_current = columns_lower.get(current_col.lower())
+    if selected_current is None:
+        available_currents = [
+            column for column in df_raw.columns if column.lower().startswith("i(")
+        ]
+        if not available_currents:
             raise ValueError(
-                f"{name} length must be 1, N_s ({N_s}), or N_s*N_modules ({total_cells}), got {len(arr)}"
+                f"Could not find {current_col!r} or another current column in {output}."
             )
+        selected_current = available_currents[-1]
+        warnings.warn(
+            f"Using {selected_current!r} because {current_col!r} is not present "
+            f"in {output}.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
 
-    cell_currents = _expand_param(cell_currents_, "cell_currents")
-    series_resistances = _expand_param(series_resistances_, "series_resistances")
-    shunt_resistances = _expand_param(shunt_resistances_, "shunt_resistances")
+    sweep_voltage = df_raw[sweep_column].to_numpy(dtype=float)
+    terminal_voltage = df_raw[terminal_voltage_column].to_numpy(dtype=float)
+    terminal_current = df_raw[selected_current].to_numpy(dtype=float)
+    if flip_module_current_if_negative and np.nanmedian(terminal_current) < 0:
+        terminal_current = -terminal_current
 
-    print(
-        f"Length of all variables: "
-        f"Rsh {len(shunt_resistances)}, Rs {len(series_resistances)}, Iph {len(cell_currents)}"
+    resistances = (
+        None
+        if series_resistances is None
+        else _expand_parameter(
+            series_resistances, "series_resistances", N_s, N_modules
+        )
     )
+    if resistances is not None and np.any(resistances == 0):
+        raise ValueError("series_resistances cannot contain zero values.")
 
-    if N_s % N_byp != 0:
-        raise ValueError(f"N_s={N_s} must be divisible by N_byp={N_byp}")
+    def node_voltage(node: str) -> np.ndarray:
+        if str(node) == "0":
+            return np.zeros(len(df_raw), dtype=float)
+        column = columns_lower.get(f"v({str(node).lower()})")
+        if column is None:
+            raise ValueError(
+                f"Missing required node column v({node}) in {output}. "
+                "Confirm N_s, N_modules, and topology match the netlist."
+            )
+        return df_raw[column].to_numpy(dtype=float)
 
-    cells_per_bypass = N_s // N_byp
-    cells_as_elem_diode = ""
+    wide_columns: dict[str, np.ndarray] = {
+        "sweep_V": sweep_voltage,
+        "module_V": terminal_voltage,
+        "module_I": terminal_current,
+        "circuit_V": terminal_voltage,
+        "circuit_I": terminal_current,
+    }
+    if N_modules > 1:
+        wide_columns["string_V"] = terminal_voltage
+        wide_columns["string_I"] = terminal_current
+    for module in range(N_modules):
+        module_start = "1" if module == 0 else f"M{module - 1}OUT"
+        module_end = "0" if module == N_modules - 1 else f"M{module}OUT"
+        wide_columns[f"V_module_{module}"] = (
+            node_voltage(module_start) - node_voltage(module_end)
+        )
+        wide_columns[f"I_module_{module}"] = terminal_current
 
-    # -----------------------------------------------------
-    # Build one long series chain across all modules
-    # -----------------------------------------------------
-    for n in range(total_cells):
-        photocurrent = cell_currents[n]
-        resistance_series = series_resistances[n]
-        resistance_shunt = shunt_resistances[n]
-
-        rsn = n
-        rpn = n
-        dn = n
-        ni = n
-
-        rspos = [n + n + 1, n + n + 2]
-        rppos = [n + n + 2, n + n + 3]
-        dpos = [n + n + 2, n + n + 3]
-        ipos = [n + n + 3, n + n + 2]
-
-        if n == 0:
-            elementary_diode = f"""
-* elementary diode model cell {n}
-Rs{rsn} 1 2 {resistance_series}
-Rp{rpn} 2 3 {resistance_shunt}
-D{dn} 2 3 sd1
-I{ni} 3 2 {photocurrent}
-"""
-        elif n == total_cells - 1:
-            elementary_diode = f"""
-* elementary diode model cell {n}
-Rs{rsn} {rspos[0]} {rspos[1]} {resistance_series}
-Rp{rpn} {rppos[0]} 0 {resistance_shunt}
-D{dn} {dpos[0]} 0 sd1
-I{ni} 0 {ipos[1]} {photocurrent}
-"""
+    long_tables: list[pd.DataFrame] = []
+    for module, branch, cell, cell_index, start, diode, end in _iter_cell_connections(
+        N_s, N_modules, topology
+    ):
+        start_voltage = node_voltage(start)
+        diode_voltage = node_voltage(diode)
+        end_voltage = node_voltage(end)
+        cell_voltage = start_voltage - end_voltage
+        junction_voltage = diode_voltage - end_voltage
+        resistance_voltage = start_voltage - diode_voltage
+        cell_current = (
+            np.full(len(df_raw), np.nan)
+            if resistances is None
+            else (diode_voltage - start_voltage) / resistances[cell_index]
+        )
+        if N_modules == 1 and topology == "series":
+            label = f"cell_{cell}"
+        elif topology == "series":
+            label = f"module_{module}_cell_{cell}"
         else:
-            elementary_diode = f"""
-* elementary diode model cell {n}
-Rs{rsn} {rspos[0]} {rspos[1]} {resistance_series}
-Rp{rpn} {rppos[0]} {rppos[1]} {resistance_shunt}
-D{dn} {dpos[0]} {dpos[1]} sd1
-I{ni} {ipos[0]} {ipos[1]} {photocurrent}
-"""
-        cells_as_elem_diode += elementary_diode
+            label = f"module_{module}_branch_{branch}_cell_{cell}"
+        wide_columns[f"V_{label}"] = cell_voltage
+        # Preserve the column names returned by the original one-module
+        # reader while using unambiguous names for module strings.
+        component_label = str(cell) if N_modules == 1 and topology == "series" else label
+        wide_columns[f"V_diode_{component_label}"] = junction_voltage
+        wide_columns[f"V_rs_{component_label}"] = resistance_voltage
+        if resistances is not None:
+            wide_columns[f"I_{label}"] = cell_current
+        long_tables.append(
+            pd.DataFrame(
+                {
+                    "sweep_V": sweep_voltage,
+                    "module_V": terminal_voltage,
+                    "module_I": terminal_current,
+                    "circuit_V": terminal_voltage,
+                    "circuit_I": terminal_current,
+                    "module": module,
+                    "branch": branch,
+                    "cell": cell,
+                    "cell_index": cell_index,
+                    "V_cell": cell_voltage,
+                    "V_diode": junction_voltage,
+                    "V_rs": resistance_voltage,
+                    "I_cell": cell_current,
+                }
+            )
+        )
 
-    # -----------------------------------------------------
-    # Add bypass diodes for each module
-    # Each bypass spans one substring of cells_per_bypass cells
-    # -----------------------------------------------------
-    dbyn = 0
-    for m in range(N_modules):
-        module_cell_start = m * N_s
+    return pd.concat(long_tables, ignore_index=True), pd.DataFrame(wide_columns), df_raw
 
-        for b in range(N_byp):
-            substring_start = module_cell_start + b * cells_per_bypass
-            substring_end = module_cell_start + (b + 1) * cells_per_bypass - 1
 
-            if substring_start == 0:
-                start_node = 1
-            else:
-                start_node = 2 * substring_start + 1
-
-            if substring_end == total_cells - 1:
-                end_node = 0
-            else:
-                end_node = 2 * substring_end + 3
-
-            elementary_diode = f"""
-* bypass diode module {m} substring {b}
-Dby{dbyn} {end_node} {start_node} sdby
-"""
-            cells_as_elem_diode += elementary_diode
-            dbyn += 1
-
-    # -----------------------------------------------------
-    # Netlist / control block
-    # -----------------------------------------------------
-    total_sweep_voltage = N_modules * v_oc + 1
-
-    circuit_content = f"""
-* One-diode solar string simulation (standard non-halfcut modules)
-
-* Define the diode model
-.model sd1 D (IS={saturation_current} N={ideality_factor} EG=1.12 BV={breakdown_voltage})
-.model sdby D (IS=1e-7 N=1 BV={v_bypass} IBV=20)
-
-* Define the DC sweep source
-V1 1 0
-
-{cells_as_elem_diode}
-
-.temp = {TNOM}
-.options tnom={TNOM}
-.control
-dc V1 0 {total_sweep_voltage} {v_step}
-print dc v(1) i(V1)
-set filetype=ascii
-write {path}/solar_circuit.out
-write {path}/solar_circuit.txt
-
-quit
-.endc
-"""
-
-    with open(os.path.join(path, f"{circuit_name}.cir"), "w") as circuit_file:
-        circuit_file.write(circuit_content)
-
-    return circuit_content
+def ngpsice_read_voltage_current_modules(
+    path: str | os.PathLike[str], output_filename: str = "solar_circuit.out"
+) -> tuple[np.ndarray, np.ndarray, pd.DataFrame]:
+    """Read v(1) and i(v1) from an ngspice ASCII raw file."""
+    dataframe = _read_ngspice_ascii_raw(path, output_filename)
+    columns_lower = {column.lower(): column for column in dataframe.columns}
+    voltage_column = columns_lower.get("v(1)")
+    current_column = columns_lower.get("i(v1)")
+    if voltage_column is None or current_column is None:
+        raise ValueError(
+            f"Expected v(1) and i(v1); found {sorted(columns_lower)}."
+        )
+    voltage = dataframe[voltage_column].to_numpy(dtype=float)
+    current = dataframe[current_column].to_numpy(dtype=float)
+    return voltage, current, pd.DataFrame({"V": voltage, "I": current})

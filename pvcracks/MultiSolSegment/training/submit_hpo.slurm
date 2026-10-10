@@ -77,7 +77,7 @@ export RAY_ADDRESS=$ip_head
 export RAY_RUNTIME_ENV_WORKING_DIR_UPLOAD_DISABLED=1
 
 echo "Submitting training job to Ray Cluster..."
-uv run python -u /mnt/home/osanghi/pvcracks/pvcracks/MultiSolSegment/training/train_channeled_unet_cv_hpo.py
+uv run python -u /mnt/home/osanghi/pvcracks/training/scripts/train_channeled_unet_cv_hpo.py
 
 # --- Cleanup ---
 # Not strictly necessary as Slurm kills the job, but good practice

@@ -38,7 +38,8 @@ from torch.utils.data import DataLoader, Subset
 from tqdm import tqdm
 
 # Local Imports
-from pvcracks.utils import train_functions
+from pvcracks.utils import model_io
+from pvcracks_training import multisolsegment as training_utils
 
 # %%
 # --- MASTER CONFIGURATION ---
@@ -80,7 +81,7 @@ set_seed(MASTER_CONFIG["seed"])
 ROOT_DIR = "/mnt/home/osanghi/pvcracks_data_fixed/"
 CATEGORY_MAPPING = {0: "dark", 1: "busbar", 2: "crack", 3: "non-cell"}
 
-SAVE_DIR_ROOT = train_functions.get_save_dir(
+SAVE_DIR_ROOT = training_utils.create_checkpoint_directory(
     str(ROOT_DIR), MASTER_CONFIG["experiment_name"]
 )
 os.makedirs(SAVE_DIR_ROOT, exist_ok=True)
@@ -105,7 +106,7 @@ with open(os.path.join(SAVE_DIR_ROOT, "master_config.json"), "w") as f:
 
 # %%
 # Load Datasets separately
-train_dataset, val_dataset_holdout = train_functions.load_dataset(
+train_dataset, val_dataset_holdout = model_io.load_dataset(
     ROOT_DIR, full_set=False
 )
 
@@ -275,7 +276,7 @@ def train_ray(config, train_dataset_ref=None, train_indices=None):
     """
     Ray Tune function optimization loop.
     """
-    device, model = train_functions.load_device_and_model(CATEGORY_MAPPING)
+    device, model = model_io.load_device_and_model(CATEGORY_MAPPING)
 
     # --- Internal Split for HPO ---
     random.shuffle(train_indices)
@@ -424,7 +425,7 @@ for fold_idx, (train_idx, val_idx) in enumerate(kf.split(range(len(train_dataset
     )
     fold_val_loader = DataLoader(fold_val_subset, batch_size=1, shuffle=False)
 
-    device, model = train_functions.load_device_and_model(CATEGORY_MAPPING)
+    device, model = model_io.load_device_and_model(CATEGORY_MAPPING)
     criterion = torch.nn.BCEWithLogitsLoss()
     optimizer = Adam(model.parameters(), lr=best_config["lr"])
 
@@ -523,7 +524,7 @@ print(f"Training for {MASTER_CONFIG['final_model_epochs']} epochs with Early Sto
 full_train_loader = DataLoader(train_dataset, batch_size=final_bs, shuffle=True)
 holdout_loader = DataLoader(val_dataset_holdout, batch_size=final_bs, shuffle=False)
 
-device, model = train_functions.load_device_and_model(CATEGORY_MAPPING)
+device, model = model_io.load_device_and_model(CATEGORY_MAPPING)
 criterion = torch.nn.BCEWithLogitsLoss()
 optimizer = Adam(model.parameters(), lr=final_lr)
 

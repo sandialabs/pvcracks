@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use pvcracks, please cite it using the metadata below."
+title: "pvcracks: Open tools for photovoltaic crack analysis and electrical simulation"
+version: 0.2.0
+date-released: 2026-09-26
+license: BSD-3-Clause
+repository-code: "https://github.com/sandialabs/pvcracks"
+url: "https://pvcracks.readthedocs.io/"
+authors:
+  - family-names: Jost
+    given-names: Norman
+  - family-names: Byford
+    given-names: Brandon K.
+  - family-names: Prado Santamaria
+    given-names: Rodrigo d.
+  - family-names: Hansen
+    given-names: Clifford W.
+  - family-names: Braid
+    given-names: Jennifer L.
+identifiers:
+  - type: doi
+    value: 10.11578/dc.20240606.4

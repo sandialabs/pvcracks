@@ -1,147 +1,112 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Mar  7 15:18:35 2024
+"""Data-preparation helpers retained for the pvspice_lite compatibility API."""
 
-Helper functions for reading in ELs and IVs.
+from __future__ import annotations
 
-@author: bbyford, nrjost
-"""
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
 
 
-def Read_IV(IVPath, sav_window=5, sav_order =2, samples = 400):
+def read_iv(
+    iv_path: str | Path,
+    savgol_window: int = 5,
+    savgol_order: int = 2,
+    samples: int = 400,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Read, rectify, lightly smooth, and interpolate a two-column IV curve.
+
+    The input CSV must contain Voltage and Current columns. The result has
+    increasing voltage and exactly samples evenly spaced points.
     """
-    Read an IV curve from a CSV file, rectify it, smooth it, and interpolate.
-
-    Parameters
-    ----------
-    IVPath : str
-        Path to the CSV file containing IV data with columns 'Voltage' and 'Current'.
-    sav_window : int, optional
-        Window length for the Savitzky-Golay filter (default is 5).
-    sav_order : int, optional
-        Polynomial order for the Savitzky-Golay filter (default is 2).
-    samples : int, optional
-        Number of voltage sample points to interpolate (default is 400).
-
-    Returns
-    -------
-    vn : numpy.ndarray
-        Evenly spaced voltage values after rectification, smoothing, and interpolation.
-    Ic : numpy.ndarray
-        Current values corresponding to vn after smoothing and interpolation.
-    """
-    import pandas as pd
-    import numpy as np
-    import scipy
     import pvlib
-    
-    #Read IV 
-    IV = pd.read_csv(IVPath)
-    # Ensure decreasing signal that is positive
-    Vc,Ic = pvlib.ivtools.utils.rectify_iv_curve(IV['Voltage'],IV['Current'])
-    # lightly smooth with savgol
-    Vc = scipy.signal.savgol_filter(Vc,sav_window,sav_order)
-    Ic = scipy.signal.savgol_filter(Ic,sav_window,sav_order)
-    
-    vn= np.squeeze(np.linspace(Vc[0],np.max(Vc), samples ))
-    
-    # linear interpret to ensure the generated IV fits the points provided 
-    Ic = np.interp(vn, Vc, Ic)
-    return(vn,Ic)
+    from scipy.signal import savgol_filter
 
-def Read_EL(path): 
-    """
-    Tile individual cell EL images into a single module image.
+    if samples < 2:
+        raise ValueError("samples must be at least 2.")
+    if savgol_window <= savgol_order or savgol_window % 2 == 0:
+        raise ValueError("savgol_window must be odd and larger than savgol_order.")
 
-    Parameters
-    ----------
-    slice : pandas.DataFrame
-        DataFrame with an 'ELPath' column pointing to each cell image.
-    input_size : tuple of int
-        Desired size (height, width) for each cell image.
-    rows : int, optional
-        Number of rows in the module layout (default is 6).
-    cols : int, optional
-        Number of columns in the module layout (default is 10).
+    iv = pd.read_csv(iv_path)
+    required = {"Voltage", "Current"}
+    if missing := required.difference(iv.columns):
+        raise ValueError(f"IV CSV is missing required columns: {sorted(missing)}.")
+    voltage, current = pvlib.ivtools.utils.rectify_iv_curve(
+        iv["Voltage"], iv["Current"]
+    )
+    if len(voltage) < savgol_window:
+        raise ValueError(
+            f"At least {savgol_window} IV points are required for smoothing."
+        )
+    voltage = savgol_filter(voltage, savgol_window, savgol_order)
+    current = savgol_filter(current, savgol_window, savgol_order)
+    interpolated_voltage = np.linspace(voltage[0], voltage[-1], samples)
+    interpolated_current = np.interp(interpolated_voltage, voltage, current)
+    return interpolated_voltage, interpolated_current
 
-    Returns
-    -------
-    img : numpy.ndarray
-        Combined module image formed by tiling resized cell images.
-    """
+
+def read_el(path: str | Path) -> np.ndarray:
+    """Read an electroluminescence image as a grayscale NumPy array."""
     import cv2
 
-    img=cv2.imread(path,cv2.IMREAD_GRAYSCALE)
-    return(img)
+    image_path = Path(path)
+    image = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
+    if image is None:
+        raise FileNotFoundError(f"Could not read EL image: {image_path}")
+    return image
 
-def cells2Mod(slice, input_size, rows=6, cols=10):
+
+def cells_to_module(
+    cells: pd.DataFrame,
+    input_size: tuple[int, int],
+    *,
+    rows: int = 6,
+    columns: int = 10,
+    path_column: str = "ELPath",
+    root: str | Path | None = None,
+) -> np.ndarray:
+    """Tile cell images named in a DataFrame into a module image.
+
+    Input size follows OpenCV width, height ordering. Relative paths are
+    resolved against root when supplied, otherwise against the working folder.
     """
-    Tile individual cell EL images into a single module image.
+    if path_column not in cells:
+        raise ValueError(f"cells must contain a {path_column!r} column.")
+    if len(cells) > rows * columns:
+        raise ValueError("More cell images were provided than the module layout holds.")
+    width, height = input_size
+    if width <= 0 or height <= 0:
+        raise ValueError("input_size values must be positive.")
 
-    Parameters
-    ----------
-    slice : pandas.DataFrame
-        DataFrame with an 'ELPath' column pointing to each cell image.
-    input_size : tuple of int
-        Desired size (height, width) for each cell image.
-    rows : int, optional
-        Number of rows in the module layout (default is 6).
-    cols : int, optional
-        Number of columns in the module layout (default is 10).
-
-    Returns
-    -------
-    img : numpy.ndarray
-        Combined module image formed by tiling resized cell images.
-    """
-    import numpy as np
     import cv2
-    import os
 
-    rc = 0
-    cc = 0
-    img = np.zeros((input_size[0]*rows,input_size[1]*cols))
-    
-    for ind, row in slice.iterrows():
-        cell = Read_EL(f"{os.getcwd()}{row.ELPath}")
-        cell = cv2.resize(cell,input_size)
-        
-        img[rc:rc+input_size[0],cc:cc+input_size[1]]=cell
-        
-        cc +=input_size[1]
-        
-        if cc>=img.shape[1]:
-            cc = 0
-            rc +=input_size[0]
-    return(img)
+    module = np.zeros((height * rows, width * columns), dtype=np.uint8)
+    base = Path.cwd() if root is None else Path(root)
+    for index, image_value in enumerate(cells[path_column]):
+        image_path = Path(image_value)
+        if not image_path.is_absolute():
+            image_path = base / image_path
+        image = cv2.resize(read_el(image_path), (width, height))
+        row, column = divmod(index, columns)
+        module[
+            row * height : (row + 1) * height, column * width : (column + 1) * width
+        ] = image
+    return module
 
-def Extract_Params(slice):
-    """
-    Extract single-diode model parameters from a DataFrame.
 
-    Parameters
-    ----------
-    slice : pandas.DataFrame
-        DataFrame containing one or more rows with the following columns:
-        - Rs  : series resistance
-        - Rsh : shunt resistance
-        - I   : photo-generated current
-        - Is  : saturation current
-        - N   : diode ideality factor
+def extract_parameters(cells: pd.DataFrame) -> list[dict[str, float]]:
+    """Return one single-diode parameter dictionary per DataFrame row."""
+    required = ("Rs", "Rsh", "I", "Is", "N")
+    if missing := set(required).difference(cells.columns):
+        raise ValueError(f"cells is missing required columns: {sorted(missing)}.")
+    return [
+        {name: float(row[name]) for name in required} for _, row in cells.iterrows()
+    ]
 
-    Returns
-    -------
-    Params : list of dict
-        A list of parameter dictionaries, one per row in `slice`. Each dict has keys:
-        'Rs', 'Rsh', 'I', 'Is', and 'N', with values taken from the corresponding row.
-    """
-    Params = []
-    for ind, row in slice.iterrows():
-        Params.append({
-            'Rs'  : row.Rs,
-            'Rsh' : row.Rsh,
-            'I'   : row.I,
-            'Is'  : row.Is,
-            'N'   : row.N
-        })
-    return Params
+
+# Legacy names remain importable while documentation and new notebooks use the
+# clear snake_case API above.
+Read_IV = read_iv
+Read_EL = read_el
+cells2Mod = cells_to_module
+Extract_Params = extract_parameters
