@@ -4,7 +4,10 @@ version: 2
 build:
   os: ubuntu-24.04
   tools:
-    python: "3.12"
+    # Python 3.12 currently resolves to an interpreter that is incompatible
+    # with the system libraries on the Read the Docs builder.  pvcracks
+    # supports Python 3.11+, so use the compatible 3.11 toolchain.
+    python: "3.11"
 
 python:
   install:
