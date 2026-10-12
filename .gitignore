@@ -21,6 +21,7 @@ docs/data/pid_pingle_example/
 *.egg-info/
 
 .venv/
+.conda/
 
 *.pt
 

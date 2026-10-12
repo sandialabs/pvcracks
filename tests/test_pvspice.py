@@ -1,8 +1,10 @@
 """Tests for the public pvspice netlist builders and output readers."""
 
 import subprocess
+import warnings
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from pvcracks.pvspice import spice_tools
@@ -203,6 +205,29 @@ def test_cell_level_iv_reader_reconstructs_voltage_and_current_curves(tmp_path):
     )
     assert not any(column.startswith("I_cell_") for column in wide_without_current)
     assert long_without_current["I_cell"].isna().all()
+
+
+def test_cell_level_iv_reader_avoids_fragmented_wide_dataframes(tmp_path):
+    """Build a 60-cell table without pandas repeated-column warnings."""
+    raw_file = tmp_path / "sixty-cell.out"
+    variables = ["v(v-sweep)", "v(1)", "i(v1)"] + [
+        f"v({node})" for node in range(2, 121)
+    ]
+    points = [
+        [0.0, 0.0, -5.0] + [0.0] * 119,
+        [1.0, 1.0, -4.0] + [0.1] * 119,
+    ]
+    _write_ascii_raw(raw_file, variables, points)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", pd.errors.PerformanceWarning)
+        _, wide, _ = ngspice_read_cell_level_ivs(
+            raw_file, N_s=60, series_resistances=0.01
+        )
+
+    assert wide.shape == (2, 247)
+    assert wide["V_diode_59"].notna().all()
+    assert wide["I_cell_59"].notna().all()
 
 
 def test_cell_level_iv_reader_validates_resistance_and_node_inputs(tmp_path):
