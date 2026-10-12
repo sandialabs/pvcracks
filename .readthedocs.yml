@@ -2,18 +2,14 @@
 version: 2
 
 build:
-  os: ubuntu-24.04
+  # Read the Docs' ASDF CPython runtimes currently require GLIBC 2.38 on
+  # this builder. Miniforge ships a compatible Python runtime instead.
+  os: ubuntu-22.04
   tools:
-    # Python 3.12 currently resolves to an interpreter that is incompatible
-    # with the system libraries on the Read the Docs builder.  pvcracks
-    # supports Python 3.11+, so use the compatible 3.11 toolchain.
-    python: "3.11"
+    python: "miniforge3-25.11"
 
-python:
-  install:
-    - method: pip
-      path: .                   # pip install -e .
-    - requirements: docs/requirements.txt
+conda:
+  environment: docs/environment.yml
 
 sphinx:
   # path to your conf.py
