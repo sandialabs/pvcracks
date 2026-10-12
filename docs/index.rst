@@ -115,12 +115,20 @@ Examples
 ========
 
 .. toctree::
-   :glob:
    :maxdepth: 1
    :titlesonly:
    :caption: Notebook examples
 
-   Examples/*
+   Examples/example_download_run_multisolsegment
+   Examples/example_multisolsegment_cellELs
+   Examples/example_multisolsegment_test_images
+   Examples/example_load_3CH-VAE
+   Examples/example_VAE_rapidELprocessing
+   Examples/example_validate_pvimage
+   Examples/example_xgboost
+   Examples/example_minimodule_build
+   Examples/example_pvspice_PID_pingel
+   Examples/example_pvspice_thermal
 
 Modules
 =======
