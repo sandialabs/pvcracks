@@ -1,0 +1,4 @@
+# Optional model-training environment for a source checkout.
+# The runtime package remains inference-capable without these dependencies.
+-e .
+-e ./training

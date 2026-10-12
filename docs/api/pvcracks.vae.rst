@@ -15,7 +15,7 @@ VAE helper modules
    :members:
    :undoc-members:
 
-.. automodule:: pvcracks.vae.VAE_functions
+.. automodule:: pvcracks.vae.inference
    :members:
    :undoc-members:
 

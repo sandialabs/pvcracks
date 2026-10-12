@@ -1,0 +1,12 @@
+# Test, lint, and documentation dependencies.
+-r requirements.txt
+
+lxml_html_clean>=0.4
+nbconvert<7
+nbsphinx>=0.9
+pypandoc-binary==1.10
+pytest>=8
+pytest-cov>=5
+ruff>=0.6
+sphinx>=7
+sphinx-rtd-theme>=2

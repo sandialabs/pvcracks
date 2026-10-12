@@ -16,6 +16,7 @@
 ## Latest Release
 
 [![DOI](https://img.shields.io/badge/DOI-10.11578%2Fdc.20240606.4-blue)](https://doi.org/10.11578/dc.20240606.4)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue)](https://github.com/sandialabs/pvcracks/releases/tag/v0.2.0)
 
 ## License
 
@@ -29,7 +30,7 @@ PVCracks is the DuraMAT project that investigates the effects of cracks on power
 - **MultiSolSegment**: segmentation of cracks, busbars, and dark areas in electroluminescence (EL) images  
 - **Variational Autoencoder (VAE)**: parameterization & clustering of segmented data  
 - **XGBoost model**: estimation of power loss (ΔPMPP) per cell
-- **pvspice_lite**: spice toolset for simulating current-voltage (I-V) curves and building synthetic module I-Vs (more features to come) 
+- **pvspice**: SPICE tools for cell, module, half-cut-module, and series-string I-V and EL simulation, including thermal, reverse-bias, and PID examples
 
 ## Documentation
 
@@ -55,7 +56,7 @@ All datasets, trained model weights, and additional resources are hosted on Dura
 ## Publications
 
 - **MultiSolSegment**  
-  In revision for *Solar Energy* (Elsevier). Preprint [10.2139/ssrn.5506469](https://dx.doi.org/10.2139/ssrn.5506469).
+  Published in *Solar Energy*. DOI: [10.1016/j.solener.2026.114469](https://doi.org/10.1016/j.solener.2026.114469). Preprint [10.2139/ssrn.5506469](https://dx.doi.org/10.2139/ssrn.5506469).
 
 - **Variational Autoencoder (VAE)**  
   EUPVSEC 2024 conference proceeding  
@@ -67,9 +68,9 @@ All datasets, trained model weights, and additional resources are hosted on Dura
 
 ## Updates
 
-- Dec. 9th 2025: Duramat webinar is uploaded here:  
-  [www.duramat.org/news-and-events/webinars](https://www.duramat.org/news-and-events/webinars)
-  [Direct Link to youtube](https://www.youtube.com/watch?v=4QWsLkpUDd4)
+- **Nov. 10, 2025**, 1 p.m. MT —
+  [*pvcracks: Quantifying the Impact of Solar Cell Cracks on PV Systems*](https://www.youtube.com/watch?v=4QWsLkpUDd4),
+  presented by Norman Jost, Sandia.
 
 ## Installation
 
@@ -82,13 +83,21 @@ cd pvcracks
 # 1. Upgrade pip, setuptools, and wheel
 pip install --upgrade pip setuptools wheel
 
-# 2. Install runtime dependencies (see requirements.txt for full list)
-pip install -r requirements.txt
-
-# 3. Install pvcracks in editable mode
-pip install -e .    # enables intra-project imports
+# 2. Install pvcracks in editable mode
+pip install -e .
 
 ```
+
+The base package includes MultiSolSegment inference, VAE clustering, XGBoost
+prediction, and pvspice. To retrain machine-learning models or run the Ray/HPO
+workflow, install the separate companion distribution:
+
+```bash
+pip install pvcracks-training
+# From this clone instead: pip install -e ./training
+```
+
+Development, documentation, and test tools are listed in `requirements-dev.txt`.
 
 ## Acknowledgments
 

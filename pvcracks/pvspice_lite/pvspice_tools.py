@@ -7,6 +7,10 @@ Build pv module netlists, run ngspice and read in output.
 @author: nrjost, bbyford
 """
 
+from pathlib import Path
+import subprocess
+
+
 def run_ngspice(ngpsice_path, circuit_file):
     """
     Run ngspice using path and netlist/circuit    
@@ -20,7 +24,7 @@ def run_ngspice(ngpsice_path, circuit_file):
 
     Returns
     -------
-    Nothing the output is saved to the path given in module_to_netlist
+    Nothing; circuit outputs are written by the netlist to explicit paths.
     
     Notes
     ------
@@ -28,12 +32,19 @@ def run_ngspice(ngpsice_path, circuit_file):
         https://ngspice.sourceforge.io/index.html
 
     """
-    import subprocess
-    ngspice_command = [ngpsice_path, "-b", circuit_file]
-    try:
-        subprocess.run(ngspice_command, stdout=subprocess.DEVNULL);
-    except subprocess.CalledProcessError as e:
-        pass
+    executable = Path(ngpsice_path).expanduser().resolve()
+    circuit = Path(circuit_file).expanduser().resolve()
+    if not executable.is_file():
+        raise FileNotFoundError(f"ngspice executable does not exist: {executable}")
+    if not circuit.is_file():
+        raise FileNotFoundError(f"SPICE circuit file does not exist: {circuit}")
+    return subprocess.run(
+        [str(executable), "-b", str(circuit)],
+        check=True,
+        cwd=str(circuit.parent),
+        text=True,
+        capture_output=True,
+    )
 
     
 def ngpsice_read_voltage_current_modules(path):
@@ -142,6 +153,13 @@ def MiniMod_Spice(params, file_path, V, V_Step=0.001, file_name ='', spicepath='
     """
     import pvlib
     import numpy as np
+
+    directory = Path(file_path).expanduser().resolve()
+    directory.mkdir(parents=True, exist_ok=True)
+    circuit_path = directory / f"solar_circuit{file_name}.cir"
+    output_path = directory / f"solar_circuit{file_name}.out"
+    text_path = directory / f"solar_circuit{file_name}.txt"
+    cell_model_path = Path(__file__).resolve().with_name("SolarCell.cp")
     
     N_s = len(params)
     Measurment_offset = {'I': 0,
@@ -189,7 +207,7 @@ def MiniMod_Spice(params, file_path, V, V_Step=0.001, file_name ='', spicepath='
     # Create Circuit Content
     circuit_content = f"""
 * Import the diode model
-.include SolarCell.cp
+.include {cell_model_path.as_posix()}
 
 * Define the DC sweep
 V1 1 0 DC 0V
@@ -200,19 +218,18 @@ V1 1 0 DC 0V
 * set the sweep for the apropriate voltage range in steps of V_Step
 dc V1 {V[0]} {V[-1]+0.1} {V_Step}
 set filetype=ascii 
-write {file_path}solar_circuit{file_name}.out
-write {file_path}solar_circuit{file_name}.txt
+write {output_path.as_posix()}
+write {text_path.as_posix()}
 
 quit
 .endc
 """
-    with open(f"{file_path}solar_circuit{file_name}.cir", "w") as circuit_file:
-        circuit_file.write(circuit_content)
+    circuit_path.write_text(circuit_content, encoding="utf-8")
     
     # Simulate and read output file
-    run_ngspice(spicepath , f"{file_path}solar_circuit{file_name}.cir")
+    run_ngspice(spicepath, circuit_path)
     
-    _, _, df_iv = ngpsice_read_voltage_current_modules(f"{file_path}solar_circuit{file_name}.out");
+    _, _, df_iv = ngpsice_read_voltage_current_modules(output_path)
     
     # use PVLIB to snip any negative values
     Vp,Ip = pvlib.ivtools.utils.rectify_iv_curve(df_iv['V'], df_iv['I'])

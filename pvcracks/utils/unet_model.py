@@ -141,8 +141,15 @@ def _get_encoder_blocks(model):
     return result
 
 
-def construct_unet(n_cls, pretrain=False):  # no weights inited
-    model = vgg16_bn(weights="DEFAULT")
+def construct_unet(n_cls, pretrain=False):
+    """Build the MultiSolSegment UNet without implicit network downloads.
+
+    Pretrained segmentation checkpoints contain the encoder parameters, so
+    inference should not download ImageNet weights. Set ``pretrain=True`` only
+    when initializing a new training experiment intentionally.
+    """
+    weights = "DEFAULT" if pretrain else None
+    model = vgg16_bn(weights=weights)
     encoder_blocks = _get_encoder_blocks(model)
     encoder_channels = [64, 128, 256, 512, 1024]  # vgg16 channels
     # prev_channels = encoder_channels[-1]
