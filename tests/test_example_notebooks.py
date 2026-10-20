@@ -46,6 +46,7 @@ def example_checkout(tmp_path_factory):
         "autoencoder_3ch_reference.csv",
     ):
         shutil.copy2(ROOT / "docs/data" / name, data / name)
+    shutil.copytree(ROOT / "docs/data/EL", data / "EL")
     for example in EXAMPLES:
         path = checkout / example
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -91,6 +92,23 @@ def test_model_example_paths(example_checkout, example, launch_directory):
             "saved = pd.read_csv(OUTPUT / 'analysis.csv')\n"
             "assert saved.shape == analysis.shape\n"
             "assert np.isfinite(saved.filter(like='_predicted').to_numpy()).all()\n"
+            "assert all(path.is_file() for path in el_paths)\n"
+            "assert sorted(gallery_indices) == list(range(len(masks)))\n"
+            "assert kmeans.n_features_in_ == 320\n"
+            "assert analysis.cluster.nunique() == selected_k\n"
+            "assert cluster_summary.n_images.sum() == len(masks)\n"
+            "members = pd.read_csv(OUTPUT / 'cluster_membership.csv')\n"
+            "assert len(members) == len(masks)\n"
+            "assert (FIGURES / 'latent_space_Pmp_Voc_percent.png').is_file()\n"
+            "assert (FIGURES / 'cluster_representative_EL_images.png').is_file()\n"
+        )
+    elif example.endswith("example_generate_images.ipynb"):
+        assertions += (
+            "assert (OUTPUT / 'generated_mask.png').is_file()\n"
+            "assert (OUTPUT / 'sampled_latent.npy').is_file()\n"
+            "assert np.all(pixel_difference > 0)\n"
+            "assert np.all(latent_distances > 1e-5)\n"
+            "assert sampled_latent.shape == (1, 320)\n"
         )
     elif example.endswith("train_xgboost.ipynb"):
         assertions += (

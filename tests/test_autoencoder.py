@@ -107,6 +107,41 @@ def test_component_counts_use_eight_connectivity():
     np.testing.assert_array_equal(scores, np.ones((1, 6)))
 
 
+def test_synthesis_samples_a_new_latent_point_and_binary_image(model_and_masks):
+    from pvcracks.vae.synthesis import synthesize_masks
+
+    model, masks = model_and_masks
+    sample = synthesize_masks(model, masks, seed=6)
+    donor_indices = sample["donor_indices"].numpy()
+    weights = sample["weights"].numpy()
+    assert len(set(donor_indices)) == 4
+    assert np.all(weights > 0)
+    np.testing.assert_allclose(weights.sum(), 1.0, atol=1e-7)
+    with torch.inference_mode():
+        donor_codes = model.encode(prepare_masks(masks[donor_indices])).numpy()
+    np.testing.assert_allclose(
+        sample["embedding"].numpy()[0],
+        np.sum(donor_codes * weights[:, None], axis=0),
+        atol=2e-5,
+        rtol=2e-5,
+    )
+    generated = sample["masks"][0].numpy()
+    assert sample["probabilities"].shape == (1, 3, 400, 400)
+    assert np.all(np.mean(masks != generated, axis=(1, 2, 3)) > 0)
+    repeated = synthesize_masks(model, masks, seed=6)
+    np.testing.assert_array_equal(sample["donor_indices"], repeated["donor_indices"])
+    np.testing.assert_allclose(sample["probabilities"], repeated["probabilities"])
+
+
+@pytest.mark.parametrize("donor_count", [1, 3])
+def test_synthesis_rejects_insufficient_donors(model_and_masks, donor_count):
+    from pvcracks.vae.synthesis import synthesize_masks
+
+    model, masks = model_and_masks
+    with pytest.raises(ValueError, match="donor_count"):
+        synthesize_masks(model, masks[:2], donor_count=donor_count)
+
+
 @pytest.mark.parametrize(
     "masks", [np.zeros((3, 256, 256)), np.full((3, 400, 400), 0.5)]
 )

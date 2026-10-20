@@ -6,6 +6,9 @@ in `autoencoder_3ch_module_209.csv`. These are the successfully segmented module
 209 rows from the supplied FinalVAE3CH analysis; one of the 27 original images
 was not included in that successful segmentation export. Original row indices
 are preserved as `source_index`. The masks are stored as uint8 without pickle.
+The scalar metadata also includes the aligned series resistance ``Rs`` from
+the same source I-V export. Original EL images are matched by ``Cell_ID`` and
+degradation stage under ``EL/`` in the full rapid-processing example.
 
 `autoencoder_3ch_reference.csv` contains the corresponding original exported
 embeddings, morphology values, and target measurements.

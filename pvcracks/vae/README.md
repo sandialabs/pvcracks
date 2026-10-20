@@ -37,3 +37,10 @@ Predictions on these rows demonstrate usage, not independent validation.
 Pooling differences across PyTorch backends can move embeddings near a tree
 split; frozen exported features reproduce the source XGBoost predictions.
 Retraining instructions are in `training/README.md`.
+
+The image-generation notebook samples a new empirical latent point with
+`pvcracks.vae.synthesis.synthesize_masks`. It uses random convex combinations
+of multiple encoded examples and applies the same combination to the spatial
+bottleneck and every skip map before decoding a new mask image. This feature
+interpolation does not introduce a learned probabilistic prior. The notebook
+checks that the sampled point and binary output differ from the input examples.

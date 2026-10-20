@@ -25,3 +25,7 @@ VAE helper modules
 .. automodule:: pvcracks.vae.features
    :members:
    :undoc-members:
+
+.. automodule:: pvcracks.vae.synthesis
+   :members:
+   :undoc-members:
