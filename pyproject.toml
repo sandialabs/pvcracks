@@ -45,7 +45,7 @@ dependencies = [
     "torch>=2.2",
     "torchvision>=0.17",
     "tqdm>=4.66",
-    "xgboost>=2.0",
+    "xgboost>=3.0.2",
 ]
 
 [project.optional-dependencies]
@@ -99,6 +99,6 @@ include = [
 
 [tool.setuptools.package-data]
 "pvcracks.MultiSolSegment" = ["model.pt"]
-"pvcracks.powerloss" = ["*.pkl"]
+"pvcracks.powerloss" = ["*.json"]
 "pvcracks.pvspice_lite" = ["SolarCell.cp"]
-"pvcracks.vae" = ["model_download.txt"]
+"pvcracks.vae" = ["model_download.txt", "README.md", "*.pth", "*.json"]

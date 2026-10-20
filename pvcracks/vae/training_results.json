@@ -1,0 +1,117 @@
+{
+    "script": "VAE_training_newimages_3CH_UNET_AE_CRACK_PLUS.py",
+    "output_dir": "/home/nrjost/githome/duramat-encoder/CurrentResults_3CH_1_unet_ae_crack_plus",
+    "model": {
+        "architecture": "UNetAutoencoder3CHPlus",
+        "base_channels": 20,
+        "note": "Skip-connected autoencoder with separate heads and crack deep supervision."
+    },
+    "training": {
+        "num_epochs_requested": 500,
+        "batch_size": 4,
+        "k_folds": 5,
+        "seed": 30,
+        "learning_rate": 8e-05,
+        "min_learning_rate": 1e-07,
+        "weight_decay": 1e-05,
+        "patience": 80,
+        "min_delta": 1e-05,
+        "grad_clip_max_norm": 1.0
+    },
+    "loss": {
+        "crack_global_weight": 1.35,
+        "busbar_global_weight": 1.0,
+        "dark_global_weight": 1.0,
+        "crack_bce_weight": 1.0,
+        "crack_dice_weight": 2.0,
+        "crack_tversky_weight": 0.5,
+        "crack_multiscale_dice_weight": 0.5,
+        "crack_edge_weight": 0.3,
+        "crack_deep_supervision_weight": 0.35,
+        "crack_pos_weight_value": 2.0,
+        "busbar_bce_weight": 1.0,
+        "busbar_dice_weight": 1.0,
+        "dark_bce_weight": 1.0,
+        "dark_dice_weight": 1.0
+    },
+    "sampler": {
+        "use_crack_weighted_sampler": true,
+        "sampler_crack_weight_scale": 5.0,
+        "sampler_max_weight": 8.0,
+        "sampler_num_samples_multiplier": 1.25
+    },
+    "augmentation": {
+        "use_random_batch_augmentation": true,
+        "hflip_prob": 0.5,
+        "vflip_prob": 0.5,
+        "rot180_prob": 0.5
+    },
+    "fold_summaries": [
+        {
+            "fold": 1,
+            "best_epoch": 443,
+            "best_val_total_loss": 0.026056509985888408,
+            "best_train_total_loss": 0.02532714054615674,
+            "best_val_crack_loss": 0.026056059604605376,
+            "best_val_busbar_loss": 4.4365610796340225e-07,
+            "best_val_dark_loss": 6.782787764225518e-09,
+            "epochs_ran": 500,
+            "final_lr": 1e-07,
+            "skipped_nonfinite_forward": 0,
+            "skipped_nonfinite_grad": 0
+        },
+        {
+            "fold": 2,
+            "best_epoch": 317,
+            "best_val_total_loss": 0.025852345964097877,
+            "best_train_total_loss": 0.02508434802325455,
+            "best_val_crack_loss": 0.025851135449957544,
+            "best_val_busbar_loss": 2.1923779282683945e-07,
+            "best_val_dark_loss": 9.912996603548663e-07,
+            "epochs_ran": 397,
+            "final_lr": 1.5625e-07,
+            "skipped_nonfinite_forward": 0,
+            "skipped_nonfinite_grad": 0
+        },
+        {
+            "fold": 3,
+            "best_epoch": 327,
+            "best_val_total_loss": 0.025112911664202053,
+            "best_train_total_loss": 0.025716223488348348,
+            "best_val_crack_loss": 0.02511261671907821,
+            "best_val_busbar_loss": 2.899904438986369e-07,
+            "best_val_dark_loss": 5.0028372659867936e-09,
+            "epochs_ran": 407,
+            "final_lr": 1.5625e-07,
+            "skipped_nonfinite_forward": 0,
+            "skipped_nonfinite_grad": 0
+        },
+        {
+            "fold": 4,
+            "best_epoch": 352,
+            "best_val_total_loss": 0.026144208536499132,
+            "best_train_total_loss": 0.02523117323828219,
+            "best_val_crack_loss": 0.026143892549799156,
+            "best_val_busbar_loss": 2.393932739389974e-07,
+            "best_val_dark_loss": 7.663677284650973e-08,
+            "epochs_ran": 432,
+            "final_lr": 1e-07,
+            "skipped_nonfinite_forward": 0,
+            "skipped_nonfinite_grad": 0
+        },
+        {
+            "fold": 5,
+            "best_epoch": 299,
+            "best_val_total_loss": 0.026558225863944677,
+            "best_train_total_loss": 0.025509918791657798,
+            "best_val_crack_loss": 0.02655784602640039,
+            "best_val_busbar_loss": 1.9965676840372442e-07,
+            "best_val_dark_loss": 1.8024767390539714e-07,
+            "epochs_ran": 379,
+            "final_lr": 1.5625e-07,
+            "skipped_nonfinite_forward": 0,
+            "skipped_nonfinite_grad": 0
+        }
+    ],
+    "elapsed_minutes": 1739.9805263002713
+}

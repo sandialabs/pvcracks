@@ -18,7 +18,7 @@ electrical circuit simulation.
 The package provides:
 
 * MultiSolSegment for crack, busbar, dark-area, and non-cell segmentation.
-* A variational autoencoder for compact EL-image representation and clustering.
+* A skip-connected 3-channel autoencoder for mask reconstruction and clustering.
 * An XGBoost power-loss estimator.
 * pvspice tools for cell, module, half-cut module, and module-string IV
   simulations.
@@ -42,7 +42,8 @@ https://datahub.duramat.org/project/pv-crack-stress-and-power-loss
   `10.21948/2587738 <https://doi.org/10.21948/2587738>`_.
 * MultiSolSegment model weights: DOI
   `10.21948/2997859 <https://doi.org/10.21948/2997859>`_.
-* VAE model weights: DOI
+* The current 3-channel autoencoder and matching XGBoost models are bundled
+  with the package. Earlier VAE weights are archived at DOI
   `10.21948/2997860 <https://doi.org/10.21948/2997860>`_.
 
 Publications
@@ -93,19 +94,25 @@ For development from a clone, use the editable installation instead:
    cd pvcracks
    python -m pip install -e .
 
-The base package includes MultiSolSegment inference, VAE clustering, XGBoost
+The base package includes MultiSolSegment inference, autoencoder clustering, XGBoost
 power-loss prediction, and both pvspice subpackages. To retrain a model or run
 Ray/HPO workflows, install the companion training distribution:
 
 .. code-block:: bash
 
-   python -m pip install pvcracks-training
+   python -m pip install -e "./training[notebooks]"
 
 For a source checkout, install its companion project in editable mode:
 
 .. code-block:: bash
 
    python -m pip install -e ./training
+
+The current ``pvcracks.vae`` model is a deterministic U-Net autoencoder;
+it takes crack, busbar, and dark masks and produces 320 pooled embeddings.
+XGBoost uses those unscaled embeddings plus six original-mask measurements.
+Training scripts and notebooks live under ``training/``; Ray/HPO dependencies
+are optional through ``python -m pip install -e "./training[hpo]"``.
 
 The SPICE examples require a separate ngspice installation. Set the executable
 path explicitly in each notebook's configuration cell. This keeps Windows,
@@ -123,6 +130,7 @@ Examples
    Examples/example_multisolsegment_cellELs
    Examples/example_multisolsegment_test_images
    Examples/example_load_3CH-VAE
+   Examples/example_generate_images
    Examples/example_VAE_rapidELprocessing
    Examples/example_validate_pvimage
    Examples/example_xgboost

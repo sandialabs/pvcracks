@@ -20,8 +20,14 @@ classifiers = [
 ]
 dependencies = [
     "pvcracks==0.2.0",
+]
+
+[project.optional-dependencies]
+notebooks = [
     "ipykernel>=6.29",
     "jupyter>=1.0",
+]
+hpo = [
     "optuna>=3.5",
     "ray[data,train,tune]>=2.9",
     "wandb>=0.16",

@@ -1,0 +1,39 @@
+{
+  "source": "FinalVAE3CH supplied by Norman Jost, imported 2026-10-20",
+  "architecture": "UNetAutoencoder3CHPlus",
+  "checkpoint": "model_3CH_500_UNET_AE_CRACK_PLUS_STATE_DICT.pth",
+  "checkpoint_sha256": "08beed430b9772fa7674a810645a76bd8af6c0210144a8f6ed1f85a6fd337c02",
+  "channels": [
+    "crack",
+    "busbar",
+    "dark"
+  ],
+  "input_shape": [
+    3,
+    400,
+    400
+  ],
+  "embedding_dim": 320,
+  "checkpoint_selection": "Final exported checkpoint: best validation weights from fold 5 (epoch 299), as saved by the supplied training script; not a fold ensemble or a refit on all data.",
+  "xgboost_features": "320 unscaled pooled bottleneck features plus three mask fractions and three 8-connected component counts.",
+  "models": {
+    "delta_pmp_percent": {
+      "filename": "xgb_segmented_delta_pmp_percent.json",
+      "sha256": "37aa318f20a328ad64f9ea8e737f92bd0bcf96d5d49c7dda3249a5cb1f81d7db",
+      "source_pickle_sha256": "1e673daa93717cd2356083c2656f88d05d2466ab7ca49d42bffcf708c61f1f79",
+      "feature_count": 326
+    },
+    "delta_voc_percent": {
+      "filename": "xgb_segmented_delta_voc_percent.json",
+      "sha256": "34aa11848066528025f1244355256150f1ee2eeb8ed01447153f0d57dfbc0d3a",
+      "source_pickle_sha256": "4c4689a57c68510d346435cdca752a921956df3e97382acd1938a1da36601fd1",
+      "feature_count": 326
+    },
+    "Rsh": {
+      "filename": "xgb_segmented_Rsh.json",
+      "sha256": "f8f4925cb97ba155da7ca396135bdba4e57314b602f8f2836d6be4f4c3163493",
+      "source_pickle_sha256": "968b2fd26219b391764a0f11fff45cc0dab8c0d64c06fa67e0b52dd9cf59cb0f",
+      "feature_count": 326
+    }
+  }
+}
