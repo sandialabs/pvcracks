@@ -50,6 +50,7 @@ dependencies = [
 
 [project.optional-dependencies]
 docs = [
+    "ipython-pygments-lexers>=1.1",
     "lxml_html_clean>=0.4",
     "nbconvert<7",
     "nbsphinx>=0.9",

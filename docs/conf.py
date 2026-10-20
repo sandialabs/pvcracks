@@ -3,9 +3,10 @@
 # -- Path setup --------------------------------------------------------------
 import os
 import sys
+from pathlib import Path
 
 # add the project root (one level up) to sys.path
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 # nbsphinx uses pandoc for Markdown cells. The documentation requirements
 # provide a portable pandoc binary; register it when available so Read the
@@ -50,6 +51,15 @@ extensions = [
 ]
 # optional: never execute the notebooks during build
 nbsphinx_execute = 'never'
+
+# Serve the exact executed notebooks shown in these pages as .ipynb downloads.
+# Sphinx resolves the leading slash relative to the documentation source root.
+nbsphinx_prolog = r"""
+.. only:: html
+
+   :download:`Download this notebook </{{ env.docname }}.ipynb>`
+
+"""
 
 # Where to look for templates
 templates_path = ['_templates']
@@ -119,8 +129,8 @@ napoleon_google_docstring = True
 napoleon_numpy_docstring = True
 napoleon_include_init_with_doc = False
 
-# nbconvert 6 emits the ``ipython3`` alias, which recent Pygments releases no
-# longer expose. Python is the equivalent lexer for the rendered notebooks.
+# Use Python when notebook metadata does not select a lexer. Saved executions
+# may declare ``ipython3``, supplied by docs' ipython-pygments-lexers dependency.
 nbsphinx_codecell_lexer = 'python'
 
 # The documented runtime APIs import scientific dependencies. Mocking them
@@ -131,6 +141,7 @@ autodoc_mock_imports = [
     'matplotlib',
     'skimage',
     'sklearn',
+    'scipy',
     'termcolor',
     'torch',
     'torchvision',

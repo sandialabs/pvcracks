@@ -1686,6 +1686,7 @@ dependencies = [
 
 [package.optional-dependencies]
 docs = [
+    { name = "ipython-pygments-lexers" },
     { name = "lxml-html-clean" },
     { name = "nbconvert" },
     { name = "nbsphinx" },
@@ -1706,6 +1707,7 @@ test = [
 requires-dist = [
     { name = "imutils", specifier = ">=0.5.4" },
     { name = "ipykernel", marker = "extra == 'test'", specifier = ">=6.29" },
+    { name = "ipython-pygments-lexers", marker = "extra == 'docs'", specifier = ">=1.1" },
     { name = "joblib", specifier = ">=1.3" },
     { name = "lxml-html-clean", marker = "extra == 'docs'", specifier = ">=0.4" },
     { name = "matplotlib", specifier = ">=3.8" },

@@ -23,6 +23,53 @@ The package provides:
 * pvspice tools for cell, module, half-cut module, and module-string IV
   simulations.
 
+Featured notebooks
+------------------
+
+Start with the complete EL workflow, or choose one of the focused examples
+below. These notebooks use the current three-channel autoencoder and matching
+XGBoost models, and include executed tables and figures.
+
+.. list-table:: Current autoencoder and XGBoost workflows
+   :header-rows: 1
+   :widths: 35 65
+
+   * - Notebook
+     - What it shows
+   * - :doc:`Full EL analysis <Examples/example_VAE_rapidELprocessing>`
+     - Process masks, inspect 3D latent-space clusters, compare signed
+       Pmp/Voc changes in percent, and view original EL images in every cluster.
+   * - :doc:`Generate a new mask image <Examples/example_generate_images>`
+     - Sample a new empirical latent point and synthesize matching skip features
+       to decode a mask image, with a check against the example inputs.
+   * - :doc:`Load the 3-channel autoencoder <Examples/example_load_3CH-VAE>`
+     - Load the bundled checkpoint, reconstruct crack/busbar/dark masks,
+       and inspect the 320-dimensional embedding.
+   * - :doc:`Inspect reconstruction and clustering <Examples/example_validate_pvimage>`
+     - Calculate channel-wise Dice and IoU scores and visualize clusters
+       of standardized bottleneck embeddings.
+   * - :doc:`Predict Pmp, Voc, and Rsh <Examples/example_xgboost>`
+     - Use the matched XGBoost models with all 326 features and compare
+       measured and predicted electrical response.
+
+Each notebook page provides a download of its executed ``.ipynb`` file.
+Run the notebooks inside a source checkout to retain their paths to the
+included example data and model weights. The default examples use 26 module
+209 observations; they demonstrate the workflow rather than reproduce the
+full manuscript data set or provide independent validation.
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :titlesonly:
+   :caption: Featured notebooks
+
+   Full EL analysis and clustering <Examples/example_VAE_rapidELprocessing>
+   Generate a new mask image <Examples/example_generate_images>
+   Load the 3-channel autoencoder <Examples/example_load_3CH-VAE>
+   Reconstruction and latent-space inspection <Examples/example_validate_pvimage>
+   Predict Pmp, Voc, and Rsh <Examples/example_xgboost>
+
 Release and documentation versions
 ----------------------------------
 
@@ -118,25 +165,23 @@ The SPICE examples require a separate ngspice installation. Set the executable
 path explicitly in each notebook's configuration cell. This keeps Windows,
 Linux, and HPC runs reproducible and avoids relying on system PATH discovery.
 
-Examples
-========
+More notebook examples
+======================
 
 .. toctree::
    :maxdepth: 1
    :titlesonly:
-   :caption: Notebook examples
+   :caption: Segmentation and circuit examples
 
    Examples/example_download_run_multisolsegment
    Examples/example_multisolsegment_cellELs
    Examples/example_multisolsegment_test_images
-   Examples/example_load_3CH-VAE
-   Examples/example_generate_images
-   Examples/example_VAE_rapidELprocessing
-   Examples/example_validate_pvimage
-   Examples/example_xgboost
+   Examples/example_download_run_multisolsegment_benchmarking
    Examples/example_minimodule_build
    Examples/example_pvspice_PID_pingel
    Examples/example_pvspice_thermal
+   Examples/example_pvspice_thermal_all_rows_fit
+   Examples/example_pvspice_reverse
 
 Modules
 =======
