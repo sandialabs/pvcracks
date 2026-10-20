@@ -2,7 +2,7 @@ name: Tests
 
 on:
   push:
-    branches: [main, 'codex/**']
+    branches: [main, update3CHVAE, 'codex/**']
   pull_request:
 
 permissions:

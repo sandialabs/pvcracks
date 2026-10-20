@@ -105,6 +105,12 @@ See [training workflows and layout](training/README.md). The updated notebook
 examples use the bundled model pair and module 209 sample masks; the XGBoost
 inputs are 320 unscaled embeddings plus six original-mask measurements.
 
+To verify the notebook paths, install `python -m pip install -e ".[test]"`
+and run `python -m pytest tests/test_example_notebooks.py`. This executes the
+five updated examples and the XGBoost training notebook in fresh Jupyter
+kernels, from both the repository root and each notebook's directory, using
+an isolated checkout with spaces in its path and only repository inputs.
+
 Development, documentation, and test tools are listed in `requirements-dev.txt`.
 
 ## Acknowledgments

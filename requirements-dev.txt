@@ -1,6 +1,9 @@
 # Test, lint, and documentation dependencies.
 -r requirements.txt
 
+ipykernel>=6.29
+nbclient>=0.10
+nbformat>=5.10
 lxml_html_clean>=0.4
 nbconvert<7
 nbsphinx>=0.9
