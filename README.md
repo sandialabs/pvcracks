@@ -28,7 +28,7 @@ PVCracks is the DuraMAT project that investigates the effects of cracks on power
 
 - Open-source cell-level imaging and electrical datasets  
 - **MultiSolSegment**: segmentation of cracks, busbars, and dark areas in electroluminescence (EL) images  
-- **Variational Autoencoder (VAE)**: parameterization & clustering of segmented data  
+- **3-channel autoencoder**: skip-connected mask reconstruction, embeddings, and clustering in the historical `vae` namespace
 - **XGBoost model**: estimation of power loss (ΔPMPP) per cell
 - **pvspice**: SPICE tools for cell, module, half-cut-module, and series-string I-V and EL simulation, including thermal, reverse-bias, and PID examples
 
@@ -51,7 +51,10 @@ All datasets, trained model weights, and additional resources are hosted on Dura
 - Cell-level EL & electrical data (data publication to follow)  
 - MultiSolSegment training images and masks (DOI: [10.21948/2587738](https://doi.org/10.21948/2587738))  
 - MultiSolSegment model weights (DOI: [10.21948/2997859](https://doi.org/10.21948/2997859))
-- VAE model weights (DOI: [10.21948/2997860](https://doi.org/10.21948/2997860))
+- The current 3-channel autoencoder checkpoint and matching XGBoost models are
+  bundled with the package. See [model details](pvcracks/vae/README.md).
+  The earlier VAE weights remain archived at DOI
+  [10.21948/2997860](https://doi.org/10.21948/2997860).
 
 ## Publications
 
@@ -88,14 +91,25 @@ pip install -e .
 
 ```
 
-The base package includes MultiSolSegment inference, VAE clustering, XGBoost
+The base package includes MultiSolSegment inference, autoencoder clustering, XGBoost
 prediction, and pvspice. To retrain machine-learning models or run the Ray/HPO
 workflow, install the separate companion distribution:
 
 ```bash
-pip install pvcracks-training
-# From this clone instead: pip install -e ./training
+pip install -e ./training
+# Optional notebook tools: pip install -e "./training[notebooks]"
+# Optional Ray/HPO tools: pip install -e "./training[hpo]"
 ```
+
+See [training workflows and layout](training/README.md). The updated notebook
+examples use the bundled model pair and module 209 sample masks; the XGBoost
+inputs are 320 unscaled embeddings plus six original-mask measurements.
+
+To verify the notebook paths, install `python -m pip install -e ".[test]"`
+and run `python -m pytest tests/test_example_notebooks.py`. This executes the
+five updated examples and the XGBoost training notebook in fresh Jupyter
+kernels, from both the repository root and each notebook's directory, using
+an isolated checkout with spaces in its path and only repository inputs.
 
 Development, documentation, and test tools are listed in `requirements-dev.txt`.
 

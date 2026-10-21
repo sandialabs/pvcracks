@@ -3,6 +3,7 @@
 # builder does not install the runtime package or its large ML dependencies.
 
 lxml_html_clean>=0.4
+ipython-pygments-lexers>=1.1
 nbconvert<7
 nbsphinx>=0.9
 numpy>=1.26

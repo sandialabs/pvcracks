@@ -26,6 +26,10 @@ def test_runtime_package_excludes_retraining_modules():
         ROOT / "pvcracks" / "MultiSolSegment" / "training" / "train_channeled_unet_cv_hpo.py"
     ).exists()
     assert (ROOT / "training" / "pyproject.toml").exists()
+    assert not list((ROOT / "pvcracks/MultiSolSegment/training").glob("*.ipynb"))
+    assert not (ROOT / "pvcracks/powerloss/powerloss_xgboost_train_3CH-VAE.ipynb").exists()
+    assert (ROOT / "training/scripts/train_3ch_autoencoder.py").exists()
+    assert (ROOT / "training/notebooks/train_xgboost.ipynb").exists()
 
 
 def test_documentation_notebooks_use_runtime_inference_apis():

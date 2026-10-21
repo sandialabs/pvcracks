@@ -45,11 +45,12 @@ dependencies = [
     "torch>=2.2",
     "torchvision>=0.17",
     "tqdm>=4.66",
-    "xgboost>=2.0",
+    "xgboost>=3.0.2",
 ]
 
 [project.optional-dependencies]
 docs = [
+    "ipython-pygments-lexers>=1.1",
     "lxml_html_clean>=0.4",
     "nbconvert<7",
     "nbsphinx>=0.9",
@@ -58,6 +59,9 @@ docs = [
     "sphinx-rtd-theme>=2",
 ]
 test = [
+    "ipykernel>=6.29",
+    "nbclient>=0.10",
+    "nbformat>=5.10",
     "pytest>=8",
     "pytest-cov>=5",
 ]
@@ -99,6 +103,6 @@ include = [
 
 [tool.setuptools.package-data]
 "pvcracks.MultiSolSegment" = ["model.pt"]
-"pvcracks.powerloss" = ["*.pkl"]
+"pvcracks.powerloss" = ["*.json"]
 "pvcracks.pvspice_lite" = ["SolarCell.cp"]
-"pvcracks.vae" = ["model_download.txt"]
+"pvcracks.vae" = ["model_download.txt", "README.md", "*.pth", "*.json"]

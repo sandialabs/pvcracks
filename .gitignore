@@ -22,6 +22,7 @@ docs/data/pid_pingle_example/
 
 .venv/
 .conda/
+/outputs/
 
 *.pt
 

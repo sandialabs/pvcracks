@@ -1,25 +1,14 @@
-The model is available to download from:
+The current FinalVAE3CH autoencoder state dictionary ships with pvcracks.
+It is paired with the bundled XGBoost JSON models and feature metadata.
+
+Load without downloading weights or depending on the working directory:
+
+    from pvcracks.vae import load_unet_ae_crack_plus
+    model, checkpoint = load_unet_ae_crack_plus(device="cpu")
+
+See README.md and model_manifest.json in this package for the model contract,
+checkpoint selection, artifact hashes, and pointers to current examples.
+Historical VAE weights remain archived at:
 https://datahub.duramat.org/dataset/pvcracks-trained-vae-model
-
-Example code to load:
-###python
-
-import requests
-import torch
-from pvcracks.vae.VAE_model_3CH import Encoder, Decoder, VAE
-device = "cpu"
-from io import BytesIO
-
-# Load from Datahub
-url = https://datahub.duramat.org/dataset/919a555d-dd97-46ad-b77c-ae7e8894e6c4/resource/e83785e1-ba34-4212-b519-c6535b3e6804/download/model_3ch_233.pth
-#This is the link to the 3CH weights from https://datahub.duramat.org/dataset/pvcracks-trained-vae-model
-
-# Download the model
-response = requests.get(url)
-if response.status_code == 200:
-    # Load the model directly from the response content
-    model = torch.load(BytesIO(response.content), weights_only=False)
-    model.to(device)
-    print("Model loaded successfully.")
-else:
-    print(f"Failed to download model. Status code: {response.status_code}")
+Those earlier weights and their latent vectors are incompatible with the
+current XGBoost predictors.

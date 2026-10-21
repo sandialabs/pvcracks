@@ -1,5 +1,24 @@
 ## Data for pvcracks examples
 
+The current autoencoder/XGBoost notebooks use `autoencoder_3ch_module_209.npz`
+(26 binary crack/busbar/dark masks, 400 x 400) and the aligned scalar metadata
+in `autoencoder_3ch_module_209.csv`. These are the successfully segmented module
+209 rows from the supplied FinalVAE3CH analysis; one of the 27 original images
+was not included in that successful segmentation export. Original row indices
+are preserved as `source_index`. The masks are stored as uint8 without pickle.
+The scalar metadata also includes the aligned series resistance ``Rs`` from
+the same source I-V export. Original EL images are matched by ``Cell_ID`` and
+degradation stage under ``EL/`` in the full rapid-processing example.
+
+`autoencoder_3ch_reference.csv` contains the corresponding original exported
+embeddings, morphology values, and target measurements.
+`xgboost_3ch_reference.csv` contains the source analysis predictions, including
+missing entries for rows without a measurement for a target. They support
+compatibility checks; they are not independent validation data. Small embedding
+differences across PyTorch backends can change predictions near a tree split.
+The old VAE latent-analysis CSV has been replaced because its features are
+incompatible with the new model pair.
+
 This folder contains data to be used in the examples. Such as, electroluminescence (EL) images from a 9‐cell minimodule provided by the Technical University of Denmark.
 
 - **Source**  

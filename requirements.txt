@@ -18,4 +18,4 @@ timm>=0.9
 torch>=2.2
 torchvision>=0.17
 tqdm>=4.66
-xgboost>=2.0
+xgboost>=3.0.2

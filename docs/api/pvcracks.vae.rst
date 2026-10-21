@@ -1,7 +1,10 @@
 pvcracks.vae subpackage
 ========================
 
-This subpackage contains the Variational Autoencoder tools for PVCracks.
+The current model is a deterministic skip-connected 3-channel autoencoder in
+the historical ``vae`` namespace. It reconstructs crack/busbar/dark masks and
+exposes a 320-dimensional pooled embedding. Its checkpoint ships with the
+package; older VAE classes remain available for historical imports.
 
 .. automodule:: pvcracks.vae
    :members:
@@ -11,7 +14,7 @@ This subpackage contains the Variational Autoencoder tools for PVCracks.
 VAE helper modules
 ------------------
 
-.. automodule:: pvcracks.vae.custom_dataset
+.. automodule:: pvcracks.vae.VAE_3CH_skipconn
    :members:
    :undoc-members:
 
@@ -19,10 +22,10 @@ VAE helper modules
    :members:
    :undoc-members:
 
-.. automodule:: pvcracks.vae.VAE_model_1CH
+.. automodule:: pvcracks.vae.features
    :members:
    :undoc-members:
 
-.. automodule:: pvcracks.vae.VAE_model_3CH
+.. automodule:: pvcracks.vae.synthesis
    :members:
    :undoc-members:

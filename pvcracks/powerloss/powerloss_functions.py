@@ -1,86 +1,108 @@
-"""
-Created on Mon Aug  7 12:04:49 2023
+"""Load the matched 3-channel autoencoder / XGBoost power-loss models."""
 
-@authors: nrjost
-"""
+from __future__ import annotations
 
-import pickle
+import json
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
+TARGETS = ("delta_pmp_percent", "delta_voc_percent", "Rsh")
+
+
+class FeaturePredictor:
+    """An XGBoost regressor with its ordered input-column contract.
+
+    DataFrames are selected by column name. Arrays must already contain all
+    features in ``feature_cols`` order, including the six morphology features.
+    """
+
+    def __init__(self, model, metadata):
+        self.model = model
+        self.metadata = metadata
+        self.feature_cols = tuple(metadata["feature_cols"])
+
+    def predict(self, features):
+        if isinstance(features, pd.DataFrame):
+            missing = set(self.feature_cols) - set(features.columns)
+            if missing:
+                raise ValueError(f"Missing model features: {sorted(missing)}")
+            values = features.loc[:, list(self.feature_cols)].to_numpy(dtype=float)
+        else:
+            values = np.asarray(features)
+            if values.dtype == object and values.ndim == 1:
+                values = np.stack(values)
+        if values.ndim != 2 or values.shape[1] != len(self.feature_cols):
+            raise ValueError(
+                f"Expected 2D features with {len(self.feature_cols)} columns "
+                f"(embeddings plus morphology); got {values.shape}"
+            )
+        if not np.isfinite(values).all():
+            raise ValueError("Model features must be finite")
+        return self.model.inplace_predict(values)
+
+
+def load_xgb_model(model_path: str | Path) -> FeaturePredictor:
+    """Load a native XGBoost JSON model and its sibling ``.metadata.json``."""
+    from xgboost import Booster
+
+    path = Path(model_path)
+    metadata = json.loads(path.with_suffix(".metadata.json").read_text())
+    model = Booster(model_file=path)
+    if model.num_features() != len(metadata["feature_cols"]):
+        raise ValueError("Model and metadata feature counts differ")
+    return FeaturePredictor(model, metadata)
+
+
+def load_all_xgb_models(model_dir: str | Path | None = None):
+    """Load the bundled ΔPmp (%), ΔVoc (%), and Rsh models from any cwd."""
+    directory = Path(model_dir) if model_dir is not None else Path(__file__).parent
+    return {
+        target: load_xgb_model(directory / f"xgb_segmented_{target}.json")
+        for target in TARGETS
+    }
+
 
 def load_xgb_models(
-    pmpp_model_path: str = "xgb_model_pmpp_diff_percent_3CH.pkl",
-    voc_model_path: str = "xgb_model_Voc_diff_percent_3CH.pkl",
+    pmpp_model_path: str | Path | None = None,
+    voc_model_path: str | Path | None = None,
 ):
+    """Return the matching bundled power and Voc predictors.
+
+    Optional paths refer to native JSON models with sibling metadata files.
+    The models predict signed percentage changes, ``100 * (post-pre) / pre``;
+    a negative value indicates loss. Values are not clipped or sign-flipped.
     """
-    Load two XGBoost models from disk:
-      - A model trained on pmpp_diff_% (power loss %)
-      - A model trained on Voc_diff_%
-
-    Parameters
-    ----------
-    pmpp_model_path : str
-        Path to the pickle file for the pmpp_diff_% model.
-    voc_model_path : str
-        Path to the pickle file for the Voc_diff_% model.
-
-    Returns
-    -------
-    pmpp_model, voc_model : xgboost.XGBRegressor
-        The loaded XGBRegressor models.
-    """
-    with open(pmpp_model_path, "rb") as f:
-        pmpp_model = pickle.load(f)
-
-    with open(voc_model_path, "rb") as f:
-        voc_model = pickle.load(f)
-
-    return pmpp_model, voc_model
+    directory = Path(__file__).parent
+    return (
+        load_xgb_model(
+            pmpp_model_path or directory / "xgb_segmented_delta_pmp_percent.json"
+        ),
+        load_xgb_model(
+            voc_model_path or directory / "xgb_segmented_delta_voc_percent.json"
+        ),
+    )
 
 
 def predict_power_and_voc(latent_vectors, pmpp_model, voc_model) -> pd.DataFrame:
+    """Predict signed power / Voc changes from a complete feature table.
+
+    ``latent_vectors`` retains its historical argument name. The current bundled
+    models require 326 features: 320 raw embeddings plus six mask measurements.
+    The historical output column ``power_loss_%`` contains signed ΔPmp (%).
     """
-    Given latent vectors, predict:
-      - power loss (%) using the pmpp model
-      - Voc difference (%) using the Voc model
-
-    Parameters
-    ----------
-    latent_vectors : array-like
-        A two-dimensional array of shape (n_samples, latent_dim), or an
-        object-dtype one-dimensional array / list of one-dimensional vectors.
-    pmpp_model : object
-        Model exposing predict(X) for power-loss percentage.
-    voc_model : object
-        Model exposing predict(X) for open-circuit-voltage difference.
-
-    Returns
-    -------
-    results : pandas.DataFrame
-        DataFrame with the power_loss_% and Voc_diff_% columns and one row
-        per input latent vector.
-    """
-    # Convert to numpy array
-    X = np.array(latent_vectors)
-
-    # If object-dtype (e.g. array of arrays), stack into a 2D array
-    if X.dtype == object:
-        X = np.vstack(X)
-
-    if X.ndim != 2:
-        raise ValueError(
-            "Expected latent_vectors to be 2D or object-dtype array of 1D "
-            f"vectors; got shape {X.shape}"
-        )
-
-    # Make predictions
-    power_loss_preds = pmpp_model.predict(X)
-    voc_diff_preds = voc_model.predict(X)
-
-    # Pack into DataFrame
-    results = pd.DataFrame(
-        {"power_loss_%": power_loss_preds, "Voc_diff_%": voc_diff_preds}
+    values = latent_vectors
+    if not isinstance(values, pd.DataFrame):
+        values = np.asarray(values)
+        if values.dtype == object and values.ndim == 1:
+            values = np.stack(values)
+    if values.ndim != 2:
+        raise ValueError(f"Expected 2D model features; got shape {values.shape}")
+    return pd.DataFrame(
+        {
+            "power_loss_%": pmpp_model.predict(values),
+            "Voc_diff_%": voc_model.predict(values),
+        },
+        index=values.index if isinstance(values, pd.DataFrame) else None,
     )
-    return results
